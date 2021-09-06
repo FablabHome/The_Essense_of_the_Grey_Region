@@ -1,0 +1,24 @@
+<launch>
+    <arg name="image_source" default="/image_raw/compressed"/>
+    <node
+        name="pf_initializer"
+        pkg="rcj_pcms_base"
+        type="PFInitializer.py"
+        required="false"
+        output="screen"
+    />
+    <node
+        name="person_follower"
+        pkg="rcj_pcms_base"
+        type="PersonFollower.py"
+        required="true"
+        output="screen"
+    />
+    <node
+        name="waypoint_recorder"
+        pkg="rcj_pcms_base"
+        type="WayPointRecorder.py"
+        required="true"
+        output="screen"
+    />
+</launch>

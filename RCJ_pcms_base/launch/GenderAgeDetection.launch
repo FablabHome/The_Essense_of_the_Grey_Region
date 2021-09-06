@@ -1,0 +1,16 @@
+<launch>
+    <arg name="bin_path"
+         default="$(find rcj_pcms_base)../models/intel/age-gender-recognition-retail-0013/FP32/age-gender-recognition-retail-0013.bin"/>
+    <arg name="xml_path"
+         default="$(find rcj_pcms_base)../models/intel/age-gender-recognition-retail-0013/FP32/age-gender-recognition-retail-0013.xml"/>
+    <node
+            name="GAD"
+            pkg="rcj_pcms_base"
+            type="GenderDetectionNode.py"
+            required="true"
+            output="screen"
+    >
+        <param name="bin_path" type="str" value="$(arg bin_path)"/>
+        <param name="xml_path" type="str" value="$(arg xml_path)"/>
+    </node>
+</launch>

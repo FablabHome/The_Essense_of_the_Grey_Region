@@ -1,0 +1,76 @@
+{
+    "Follow me now!": {
+        "answer": "Ok, no worries.",
+        "and": [
+            "me",
+            "now"
+        ],
+        "or": [
+            "follow",
+            "call"
+        ],
+        "response": "follow"
+    },
+    "Anchor, lets sit here for a rest.": {
+        "answer": "Okay, I will stop.",
+        "and": [
+            "here"
+        ],
+        "or": [
+            "rest",
+            "year",
+            "just",
+            "alexis"
+        ],
+        "response": "stop_follow"
+    },
+    "What did I forget": {
+        "answer": "You forgot to take your bag and bottle which is on the table.",
+        "and": [
+            "did",
+            "i"
+        ],
+        "or": [
+            "forget",
+            "forgot"
+        ],
+        "response": ""
+    },
+    "Wait for me here": {
+        "answer": "okay",
+        "and": [
+            "wait",
+            "for"
+        ],
+        "or": [
+        ],
+        "response": "stop_follow"
+    },
+    "I feel dizzy now": {
+        "answer": "Do you need me to call the cops",
+        "and": [
+            "feel"
+        ],
+        "or": [
+            "dizzy",
+            "easy",
+            "disney",
+            "dc",
+            "queasy",
+            "TZ",
+            "feel"
+        ],
+        "response": "stop_follow"
+    },
+    "Lets go back home now": {
+        "answer": "Ok. Lets go now",
+        "and": [
+            "go",
+            "back"
+        ],
+        "or": [
+            "home"
+        ],
+        "response": "follow"
+    }
+}

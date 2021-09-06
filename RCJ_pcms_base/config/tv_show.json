@@ -1,0 +1,89 @@
+{
+    "Robie, where should i sit": {
+        "response": "Follow me, I will bring you to your sit",
+        "and": [
+        ],
+        "or": [
+            "where",
+            "sit"
+        ],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-p", "-3.1076892219", "-3.6783052689", "0.51224339", "0.85884033"],
+            ["go_to_point", "--wait-until-end", "-p", "1.754736907", "-1.976775948", "-0.070871873", "0.99748542723"],
+            ["say", "-t The menu is on my shelf, please take it"],
+            ["delay", "-s 5"],
+            ["say", "-t Please raise your hand if you are ready to make an order"],
+            ["go_to_point", "--wait-until-end", "-p", "-0.881165726693", "-0.093675889", "-0.173868", "0.9847688697"],
+            ["code", "beta"]
+        ]
+    },
+    "We would like to order some french fries": {
+        "response": "No problem, french fries with our special raspberry-pie sauce",
+        "and": [
+            "order"
+        ],
+        "or": [
+            "french",
+            "fries"],
+        "action": []
+    },
+    "We will have the meat salad please": {
+        "response": "Sure, meat salad, my favourite",
+        "and": [
+            "have"
+        ],
+        "or": [
+            "meat",
+            "salad"],
+        "action": []
+    },
+    "May I get the spaghetti for the main course please": {
+        "response": "Okay, our specialty baked spaghetti with Parmesan cheese",
+        "and": [
+            "get"
+        ],
+        "or": [
+            "spaghetti",
+            "course"
+        ],
+        "action": []
+    },
+    "Wow, Robie you are so smart": {
+        "response": "Thank you sir. You will receive all your meal within 15 minutes, see you later",
+        "and": [
+        ],
+        "or": [
+            "smart",
+            "wow"],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-p", "-0.624469", "0.8100540732", "0.8100540732", "0.8100540732"],
+            ["say", "-t Hi chief, table 001 ordered french fries, and a meat salad"]
+        ]
+    },
+    "Go to seat point now": {
+        "response": "roger",
+        "and": [
+            "now",
+            "point"
+        ],
+        "or": [],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-p", "1.754736907", "-1.976775948", "-0.070871873", "0.99748542723"],
+            ["say", "-t Please enjoy your food"]
+        ]
+    },
+    "May I get a glass of lemonade as well please": {
+        "response": "Absolutely",
+        "and": [
+            "glass"
+        ],
+        "or": [
+            "well",
+            "lemonade"
+        ],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-p", "-0.7201499", "-0.4802352", "0.957917674", "0.28704307"],
+            ["code", "delta"]
+        ]
+    }
+}

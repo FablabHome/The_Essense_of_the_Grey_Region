@@ -1,0 +1,173 @@
+{
+    "How are you today?": {
+        "answer": "I'm doing great, how about you?",
+        "and": [
+            "How"
+        ],
+        "or": [
+            "is",
+            "are",
+            "day",
+            "today"
+        ],
+        "response": ""
+    },
+    "so follow me and I will bring you there.": {
+        "answer": "Ok, I’m now following you.",
+        "and": [
+            "bring",
+            "you",
+            "follow"
+        ],
+        "or": [],
+        "response": "follow"
+    },
+    "Stop following me": {
+        "answer": "OK, I've stopped",
+        "and": [
+            "stop",
+            "following"
+        ],
+        "or": [],
+        "response": "stop_follow"
+    },
+    "Ah, I forgot by bag": {
+        "answer": "I'll you bring your juice first, please put it inside by box. please tell me where to go",
+        "and": [
+            "forgot"
+        ],
+        "or": [
+            "bag",
+            "back"
+        ],
+        "response": ""
+    },
+    "Please go to the lab": {
+        "answer": "Ok, no worries.",
+        "and": [
+            "lab",
+            "go"
+        ],
+        "or": [
+            "please",
+            "to"
+        ],
+        "response": "go_to_point 1.4 7.63 3.13857"
+    },
+    "Hi, Anchor": {
+        "answer": "Hi",
+        "and": [
+            "Hi",
+            "Anchor"
+        ],
+        "or": [],
+        "response": ""
+    },
+    "Hello, Anchor.": {
+        "answer": " Hi, Cristiano. Wow, you look great today, my friend, with white clothes and black pants.",
+        "and": [
+            "Hello"
+        ],
+        "or": [
+            "Anchor",
+            "to",
+            "enter"
+        ],
+        "response": ""
+    },
+    "He told me that he would come with you here.": {
+        "answer": "Cristiano has forgotten to bring his bag and he told me to come first.",
+        "and": [
+            "would",
+            "come",
+            "with"
+        ],
+        "or": [],
+        "response": ""
+    },
+    "Hey Anchor, can you listen to me practicing the team introduction.": {
+        "answer": "Of course.",
+        "and": [
+            "listen",
+            "to",
+            "me"
+        ],
+        "or": [
+            "practicing",
+            "introduction"
+        ],
+        "response": ""
+    },
+    "Tell him I'm busy": {
+        "answer": "OK. I will say that you are busy.",
+        "and": [
+            "busy"
+        ],
+        "or": [
+            "tell",
+            "told"
+        ],
+        "response": "go_to_point 1.33 7.59 -0.00143"
+    },
+    "I forgot the next sentence.": {
+        "answer": "We used furniture detection",
+        "and": [
+            "next",
+            "sentence"
+        ],
+        "or": [],
+        "response": ""
+    },
+    "Thank you, everyone.": {
+        "answer": "Wow, you speak so fluently, very good.",
+
+        "and": [
+            "Thank",
+            "everyone"
+        ],
+        "or": [],
+        "response": ""
+    },
+    "can you please help me to ask Thomas to come to the lab and help us to move some heavy stuff in the next room?": {
+        "answer": "Ok, no problem. I will tell him to come.",
+        "and": [
+            "heavy",
+            "stuff"
+        ],
+        "or": [],
+        "response": "go_to_point 0.372 -0.326 3.13857"
+    },
+    "I'll start introducing my team": {
+        "answer": "",
+        "and": [
+            "introducing",
+            "team"
+        ],
+        "or": [
+            "I'll",
+            "my"
+        ],
+        "response": ""
+    },
+    "can you go back and find Cristiano.": {
+        "answer": "Ok, count on me.",
+        "and": [
+            "find",
+            "Cristiano"
+        ],
+        "or": [],
+        "response": "go_to_point 6.13 3.79 -0.615"
+    },
+    "Tell me a love story": {
+        "answer": "A love story of Cristiano, who loves Chloe very much",
+        "and": [
+            "love",
+            "story"
+        ],
+        "or": [
+            "Tell",
+            "Told"
+        ],
+        "response": ""
+    }
+}

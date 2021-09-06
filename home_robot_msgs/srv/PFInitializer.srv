@@ -1,0 +1,6 @@
+sensor_msgs/CompressedImage front_img
+sensor_msgs/CompressedImage back_img
+float32[] front_descriptor
+float32[] back_descriptor
+---
+bool ok

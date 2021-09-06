@@ -1,0 +1,12 @@
+<launch>
+    <arg name="model_path" default="$(find rcj_pcms_base)../models/mask_detector/mask_detector.model"/>
+    <node
+            name="FMD"
+            pkg="rcj_pcms_base"
+            type="FaceMaskDetsNode.py"
+            required="false"
+            output="screen"
+    >
+        <param name="model_path" type="str" value="$(arg model_path)"/>
+    </node>
+</launch>

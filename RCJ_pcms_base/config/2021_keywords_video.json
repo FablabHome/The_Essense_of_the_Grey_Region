@@ -1,0 +1,135 @@
+{
+    "Hello, what's your name?": {
+        "response": "My name is Robie, how can I help you?",
+        "and": [
+            "Hello",
+            "name"
+        ],
+        "or": [],
+        "action": []
+    },
+    "I want to order a spaghetti": {
+        "response": "Alright, spaghetti, what else do you want to order",
+        "and": [
+            "order",
+            "spaghetti"
+        ],
+        "or": [
+            "want",
+            "to"
+        ],
+        "action": []
+    },
+    
+    "I want to order a pizza": {
+        "response": "Alright, a pizza, what else do you want to order",
+        "and": [
+            "order",
+            "pizza"
+        ],
+        "or": [
+            "want",
+            "to"
+        ],
+        "action": []
+    },
+    "I want to order a burger": {
+        "response": "Alright, a cheese burger or tomato burger",
+        "and": [
+            "order",
+            "burger"
+        ],
+        "or": [
+            "want",
+            "to"
+        ],
+        "action": []
+    },
+    "A cheese burger please": {
+        "response": "Alright, cheese burger, what else do you want to order",
+        "and": [
+            "cheese",
+            "burger"
+        ],
+        "or": [],
+        "action": []
+    },
+    "A tomato burger please": {
+        "response": "Alright, tomato burger, what else do you want to order",
+        "and": [
+            "tomato",
+            "burger"
+        ],
+        "or": [],
+        "action": []
+    },
+       "That's all thank you": {
+        "response": "Alright, please wait for a moment, our chief is making it for you",
+        "and": [
+            "thank",
+            "you"
+        ],
+        "or": [
+            "all",
+            "that's"
+        ],
+        "action": []
+    },
+    
+    "I have waited for so long": {
+        "response": "I'm sorry, just a few seconds",
+        "and": [
+            "waited"
+        ],
+        "or": [
+            "so",
+            "long"
+        ],
+        "action": []
+    },
+      
+    "Can you do a job for me": {
+        "response": "Yes sir, i will lead you to the computer rooom, follow me",
+        "and": [
+            "job"
+        ],
+        "or": [
+            "for"
+        ],
+        "action": []
+    },
+        "your mother suck": {
+        "response": "Diu lay lo mo, and I'm gonna fuck fuck fuck fuck fuck fuck you",
+        "and": [
+            "mother"
+        ],
+        "or": [
+            "suck"
+        ],
+        "action": []
+    },
+    
+        "Fuck you bro": {
+        "response": "Fuck you too son of a bitch",
+        "and": [
+            "bro"
+        ],
+        "or": [
+            "f***"
+        ],
+        "action": []
+    },
+    
+    "I want to have a can of coke": {
+        "response": "Okay, Right away, our robot will help you to do it",
+        "and": [
+            "have",
+            "coke"
+        ],
+        "or": [
+            "to",
+            "can"
+        ],
+        "action": []
+    }
+}

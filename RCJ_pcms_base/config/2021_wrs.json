@@ -1,0 +1,20 @@
+{
+    "May I get the spaghetti please": {
+        "response": "Okay, our specialty baked spaghetti with Parmesan cheese",
+        "and": [
+            "get", "spaghetti"
+        ],
+        "or": [],
+        "action": []
+    },
+    "I want to order the meat salad please": {
+        "response": "Sure, meat salad, my favourite",
+        "and": [
+            "order"
+        ],
+        "or": [
+            "meat",
+            "salad"],
+        "action": []
+    }
+}

@@ -1,0 +1,16 @@
+<launch>
+    <arg name="image_source" default="/top_camera/rgb/image_raw/compressed"/>
+    <arg name="bin_path" default="$(find rcj_pcms_base)../models/intel/face-detection-0204/FP32/face-detection-0204.bin"/>
+    <arg name="xml_path" default="$(find rcj_pcms_base)../models/intel/face-detection-0204/FP32/face-detection-0204.xml"/>
+    <node
+            name="FD"
+            pkg="rcj_pcms_base"
+            type="FaceDetectionNode.py"
+            required="true"
+            output="screen"
+    >
+        <param name="image_source" type="str" value="$(arg image_source)"/>
+        <param name="bin_path" type="str" value="$(arg bin_path)"/>
+        <param name="xml_path" type="str" value="$(arg xml_path)"/>
+    </node>
+</launch>

@@ -1,0 +1,121 @@
+{
+    "Robie, where should i sit": {
+        "response": "Follow me, I will bring you to your sit",
+        "and": [
+        ],
+        "or": [
+            "where",
+            "sit"
+        ],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-p", "-5.396929", "-1.2188314", "0.000215", "0.01998547"],
+            ["go_to_point", "--wait-until-end", "-p", "-1.46", "0.09", "0.44", "0.89"],
+            ["say", "-t The menu is on my shelf, please take it"],
+            ["delay", "-s 5"],
+            ["say", "-t Please raise your hand if you are ready to make an order"],
+            ["go_to_point", "--wait-until-end", "-p", "-1.46", "0.09", "0.896", "0.4438"],
+            ["go_to_point", "--wait-until-end", "-p", "-4.82", "0.827", "0.1076844", "0.99418"],
+            ["go_to_point", "-p", "-4.82", "0.827", "-0.19797342", "0.98020738"],
+            ["code", "beta"]
+        ]
+    },
+    "We would like to order some french fries": {
+        "response": "No problem, french fries with our special raspberry-pie sauce",
+        "and": [
+            "order"
+        ],
+        "or": [
+            "french",
+            "fries"],
+        "action": []
+    },
+    "We will have the meat salad please": {
+        "response": "Sure, meat salad, my favourite",
+        "and": [
+            "have"
+        ],
+        "or": [
+            "meat",
+            "salad"],
+        "action": []
+    },
+    "May I get the spaghetti for the main course please": {
+        "response": "Okay, our specialty baked spaghetti with Parmesan cheese",
+        "and": [
+            "get"
+        ],
+        "or": [
+            "spaghetti",
+            "course"
+        ],
+        "action": []
+    },
+    "Wow, Robie you are so smart": {
+        "response": "Thank you sir. You will receive all your meal within 15 minutes, see you later",
+        "and": [
+        ],
+        "or": [
+            "smart",
+            "wow"],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-p", "-1.46", "0.09", "0.896", "0.4438"],
+            ["go_to_point", "--wait-until-end","-p", "-2.74", "4.71", "0.20", "0.97"],
+            ["say", "-t Hi chief, table 001 ordered french fries, a meat salad, and a baked spaghetti with Parmesan cheese"]
+        ]
+    },
+    "Go to seat point now": {
+        "response": "roger",
+        "and": [
+            "now",
+            "point"
+        ],
+        "or": [],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-p", "-2.74", "4.71", "0.979237", "0.20271766"],
+            ["go_to_point", "--wait-until-end", "-p", "-1.46", "0.09", "0.44", "0.89"],
+            ["say", "-t Please enjoy your food"]
+        ]
+    },
+    "May I get a glass of lemonade as well please": {
+        "response": "Absolutely",
+        "and": [
+            "glass"
+        ],
+        "or": [
+            "well",
+            "lemonade"
+        ],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-p", "-1.46", "0.09", "0.896", "0.4438"],
+            ["go_to_point", "--wait-until-end","-p", "-2.869", "4.541", "0.021228", "0.999774"],
+            ["code", "delta"]
+        ]
+    },
+    "Robie, today is my friend's birthday, I have heard that there will be a special event": {
+        "response": "Yes, let's get her a surprise cake. May I have her name please",
+        "and": [
+            "birthday"
+        ],
+        "or": [
+            "special",
+            "event"
+        ],
+        "action": []
+    },
+    "She is Aurora, today is her 18th birthday.": {
+        "response": "Okay, got it",
+        "and": [
+            "today"
+        ],
+        "or": [
+            "birthday",
+            "her"
+        ],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-p", "-1.46", "0.09", "0.896", "0.4438"],
+            ["go_to_point", "--wait-until-end", "-p", "-4.82", "0.827", "0.1076844", "0.99418"],
+            ["delay", "-s 10"],
+            ["code", "final"]
+        ]
+    }
+}

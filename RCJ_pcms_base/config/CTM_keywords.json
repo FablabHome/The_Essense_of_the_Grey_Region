@@ -1,0 +1,35 @@
+{
+    "Follow me now!": {
+        "response": "Ok, no worries.",
+        "and": [
+            "me",
+            "now"
+        ],
+        "or": [
+            "follow",
+            "call"
+        ],
+        "action": "follow"
+    },
+    "Stop following me": {
+        "response": "Ok, I've stopped",
+        "and": [
+            "Stop",
+            "following"
+        ],
+        "or": [],
+        "action": "stop_follow"
+    },
+    "Please go back home": {
+        "response": "Ok, no worries.",
+        "and": [
+            "lab",
+            "go"
+        ],
+        "or": [
+            "please",
+            "to"
+        ],
+        "action": "go_to_point 1.4 7.63 3.13857"
+    }
+}

@@ -1,0 +1,30 @@
+<launch>
+    <node
+            name="YOLODetection"
+            pkg="home_edu_2020"
+            type="YOLODetection.py"
+            required="true"
+            output="screen"
+    />
+    <node
+            name="SpeechQuestion"
+            pkg="home_edu_2020"
+            type="SpeechQuestion.py"
+            required="true"
+            output="screen"
+    />
+    <node
+            name="ChassisSLAMClient"
+            pkg="home_edu_2020"
+            type="ChassisSLAMClient.py"
+            required="true"
+            output="screen"
+    />
+    <node
+        name="VideoMain"
+        pkg="home_edu_2020"
+        type="VideoMain.py"
+        required="true"
+        output="screen"
+    />
+</launch>

@@ -1,0 +1,13 @@
+{
+    "Go now": {
+        "response": "Ok, switching from person follower to furnitures detector",
+        "and": [
+            "go", "now"
+        ],
+        "or": [],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-p", "-4.099763393", "-2.336112976", "0.0", "1.0"],
+            ["say", "--wait-until-end", "--text", "hi"]
+        ]
+    }
+}
