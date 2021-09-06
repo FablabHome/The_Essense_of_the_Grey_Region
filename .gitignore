@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+/RCJ_pcms_base/models/
+/RCJ_pcms_base/scripts/test.py
+/datasets/
+/models/
+/RCJ_pcms_base/scripts/tests/test.py
+/RCJ_pcms_base/test_videos/
