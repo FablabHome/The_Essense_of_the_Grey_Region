@@ -68,25 +68,7 @@ class MainProg:
         go_to_point.main(data, self.goal_pub)
 
     def _alpha(self):
-        self.__go_to_point(1.48625732466, -1.87237822643, -0.723484843933, 0.690340264362, wait_until_end=True)
-
-        rospy.set_param('/YD/lock', False)
-        rospy.set_param('/manipulator_grab/lock', False)
-
-        while not rospy.get_param('/manipulator_grab/grabbed'):
-            continue
-
-        t = Twist()
-        t.linear.x = -0.2
-        self.wheel_pub.publish(t)
-        rospy.sleep(2)
-
-        self.__go_to_point(2.45894356306, -1.69283733473, -0.789928684276, 0.613198722894, wait_until_end=True)
-        rospy.set_param('/manipulator_grab/place', True)
-        while not rospy.get_param('/manipulator_grab/placed'):
-            continue
-
-        self.__go_to_point(2.87856819597, 0.0795860457531, -0.994349938809, 0.106151774318, wait_until_end=True)
+        pass
 
     def _beta(self):
         hand_queue = [False]
