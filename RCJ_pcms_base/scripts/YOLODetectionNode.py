@@ -42,7 +42,7 @@ class YOLODetectionNode:
             self.change_camera
         )
 
-        rospy.set_param('~lock', False)
+        rospy.set_param('~lock', True)
 
         self.bridge = CvBridge()
 
@@ -157,12 +157,14 @@ if __name__ == "__main__":
 
             boxes.boxes = box_items
             boxes.source_img = node.bridge.cv2_to_compressed_imgmsg(source_image)
-            # serialized_drown_img = node.bridge.cv2_to_compressed_imgmsg(np.array(drown_image))
-            # node.source_image_pub.publish(serialized_drown_img)
+
+            serialized_drown_img = node.bridge.cv2_to_compressed_imgmsg(np.array(drown_image))
+            node.source_image_pub.publish(serialized_drown_img)
             pub.publish(boxes)
-            # try:
-            #     cv.imshow('YD', drown_image)
-            #     cv.waitKey(1)
-            # except Exception:
-            #     rospy.loginfo(drown_image.shape)
+
+            try:
+                cv.imshow('YD', drown_image)
+                cv.waitKey(1)
+            except Exception:
+                rospy.loginfo(drown_image.shape)
             rate.sleep()

@@ -16,7 +16,6 @@ class MainProg:
             'alpha': self._alpha,
             'beta': self._beta,
             'delta': self._delta,
-            'epsilon': self._epsilon,
             'final': self._final,
         }
 
@@ -58,26 +57,36 @@ class MainProg:
 
         self.base = RosPack().get_path('rcj_pcms_base')
 
-        self._beta()
+        self._alpha()
 
     def code_callback(self, data):
         code = data.data
         self.codes[code]()
 
-    def _alpha(self):
-        face_queue = [0]
-        while not all(face_queue):
-            faces = rospy.wait_for_message('/FD/faces', ObjectBoxes)
-            face_queue.append(len(faces.boxes))
-            rospy.loginfo(face_queue)
-            if len(face_queue) > 25:
-                face_queue.pop(0)
+    def __go_to_point(self, x, y, z, w, wait_until_end=False):
+        data = {'point': [x, y, z, w], 'wait_until_end': wait_until_end}
+        go_to_point.main(data, self.goal_pub)
 
-        self.speaker_srv('Good morning, welcome to the Robi Restaurant, my name is robie, and I will be serving you today')
-        self.speaker_srv('Before entering the restaurant, please show me your health code')
-        rospy.set_param('/qr_code/lock', False)
+    def _alpha(self):
+        self.__go_to_point(1.48625732466, -1.87237822643, -0.723484843933, 0.690340264362, wait_until_end=True)
+
+        rospy.set_param('/YD/lock', False)
+        rospy.set_param('/manipulator_grab/lock', False)
+
+        while not rospy.get_param('/manipulator_grab/grabbed'):
+            continue
+
+        t = Twist()
+        t.linear.x = -0.2
+        self.wheel_pub.publish(t)
         rospy.sleep(2)
-        self.speaker_srv('Mister, please wear your mask properly')
+
+        self.__go_to_point(2.45894356306, -1.69283733473, -0.789928684276, 0.613198722894, wait_until_end=True)
+        rospy.set_param('/manipulator_grab/place', True)
+        while not rospy.get_param('/manipulator_grab/placed'):
+            continue
+
+        self.__go_to_point(2.87856819597, 0.0795860457531, -0.994349938809, 0.106151774318, wait_until_end=True)
 
     def _beta(self):
         hand_queue = [False]
@@ -116,10 +125,6 @@ class MainProg:
         data = {'point': [1.754736907, -1.976775948, 0.99742867, 0.07166617], 'wait_until_end': True}
         go_to_point.main(data, self.goal_pub)
         self.speaker_srv('Here are your drinks, please enjoy')
-
-    def _epsilon(self):
-        stat_list = deque([], maxlen=20)
-        while rospy.wait_for_message('')
 
     def _final(self):
         self.play_pub.publish()
