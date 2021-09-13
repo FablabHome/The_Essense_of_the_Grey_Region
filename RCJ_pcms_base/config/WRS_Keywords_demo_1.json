@@ -1,0 +1,88 @@
+{
+    "Help me throw away this bottle": {
+        "response": "Ok, please lend me that bottle",
+        "and": [
+            "throw"
+        ],
+        "or": [
+            "bottle",
+            "photo",
+            "help",
+            "away"
+        ],
+        "action": [
+            ["code", "delta"]
+        ]
+    },
+    "I would like to order some food": {
+        "response": "No problem, the menu is on my shelf, please take it",
+        "and": [
+            "order",
+            "food"
+        ],
+        "or": [
+            "I",
+            "like"
+        ],
+        "action": []
+    },
+    "We would like to order one bread": {
+        "response": "No problem, baked bread with the special raspberry-pie sauce",
+        "and": [
+            "order"
+        ],
+        "or": [
+            "one",
+            "bread"],
+        "action": []
+    },
+    "We will have some potato chips please": {
+        "response": "Sure, potato chips, my favourite",
+        "and": [
+            "have"
+        ],
+        "or": [
+            "potato",
+            "chips",
+            "lips"
+        ],
+        "action": []
+    },
+    "May I get the spaghetti for the main course please": {
+        "response": "Okay, our specialty baked spaghetti with Parmesan cheese",
+        "and": [
+            "get"
+        ],
+        "or": [
+            "spaghetti",
+            "course"
+        ],
+        "action": []
+    },
+    "That's all, thank you": {
+        "response": "You have ordered a baked bread and potato chips from Robie’s restaurant, they will arrive in a moment.",
+        "and": [
+            "all",
+            "thank"
+        ],
+        "or": [],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-l", "entrance-front"],
+            ["say", "--wait-until-end", "-t Hi, Please wear your mask properly"],
+            ["delay", "-s 1"],
+            ["say", "--wait-until-end", "-t Please put the foods on my shelf"]
+        ]
+    },
+    "I'm ok": {
+        "response": "Roger that, I'm deliverying it to my master",
+        "and": [
+            "ok"
+        ],
+        "or": [],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-l", "entrance"],
+            ["go_to_point", "-l", "bedroom-backwards"],
+            ["code", "beta"]
+        ]
+    }
+}
