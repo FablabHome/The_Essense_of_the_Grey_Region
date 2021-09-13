@@ -31,14 +31,14 @@ class PersonReidentification:
     def __init__(self, person_extractor: cv.dnn_Net):
         self.person_extractor = person_extractor
 
-    def parse_descriptor(self, person_image) -> np.array:
+    def parse_descriptor(self, person_image, crop=False) -> np.array:
         blob = cv.dnn.blobFromImage(
             person_image,
             size=(128, 256),
             scalefactor=1.0,
             mean=(0, 0, 0),
             swapRB=False,
-            crop=False
+            crop=crop
         )
 
         self.person_extractor.setInput(blob)
