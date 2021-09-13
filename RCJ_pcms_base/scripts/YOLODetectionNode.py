@@ -13,6 +13,7 @@ from home_robot_msgs.srv import ChangeImgSource, ChangeImgSourceResponse, Change
 from keras_yolo3.yolo import YOLO_np
 from rospkg import RosPack
 from sensor_msgs.msg import CompressedImage
+from std_srvs.srv import SetBool, SetBoolResponse
 
 from core.Detection.YOLODetection import DetectBox
 
@@ -41,8 +42,19 @@ class YOLODetectionNode:
             ChangeImgSource,
             self.change_camera
         )
+        rospy.Service(
+            '~lock',
+            SetBool,
+            self.lock_callback
+        )
+        rospy.Service(
+            '~kill',
+            SetBool,
+            self.kill_callback
+        )
 
-        rospy.set_param('~lock', True)
+        self.lock = False
+        self.kill = False
 
         self.bridge = CvBridge()
 
@@ -87,6 +99,14 @@ class YOLODetectionNode:
 
         return ChangeImgSourceResponse(ok=ok)
 
+    def lock_callback(self, data):
+        self.lock = data.data
+        return SetBoolResponse()
+
+    def kill_callback(self, data):
+        self.kill = data.data
+        return SetBoolResponse()
+
 
 if __name__ == "__main__":
     rospy.init_node('YD')
@@ -117,8 +137,8 @@ if __name__ == "__main__":
         queue_size=1
     )
 
-    while not rospy.is_shutdown():
-        if not rospy.get_param('~lock'):
+    while not rospy.is_shutdown() and not node.kill:
+        if not node.lock:
             box_items = []
             boxes = ObjectBoxes()
             # Get objects and source images
@@ -158,8 +178,8 @@ if __name__ == "__main__":
             boxes.boxes = box_items
             boxes.source_img = node.bridge.cv2_to_compressed_imgmsg(source_image)
 
-            serialized_drown_img = node.bridge.cv2_to_compressed_imgmsg(np.array(drown_image))
-            node.source_image_pub.publish(serialized_drown_img)
+            # serialized_drown_img = node.bridge.cv2_to_compressed_imgmsg(np.array(drown_image))
+            # node.source_image_pub.publish(serialized_drown_img)
             pub.publish(boxes)
 
             try:
