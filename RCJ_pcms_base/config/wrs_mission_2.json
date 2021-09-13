@@ -1,0 +1,204 @@
+{
+    "Are you ready?": {
+        "response": "I'm coming",
+        "and": ["ready", "you"],
+        "or": [],
+        "action": [
+            ["go_to_point", "--wait-until", "-l", "room1-center"],
+            ["say", "-t I'm ready, go ahead, punk"]
+        ]
+    },
+    "What is the current capital of Japan": {
+        "response": "Tokyo",
+        "and": ["current"],
+        "or": [
+            "current",
+            "capital"
+        ],
+        "action": []
+    },
+    " What is the snow monkey, also called Japanese macaque, known for": {
+        "response": "It is the northernmost primate on Earth",
+        "and": [],
+        "or": [
+            "snow",
+            "monkey"
+        ],
+        "action": []
+    },
+    "Which quarter in Tokyo is known for the colorful and vibrant street fashion": {
+        "response": "Toneri",
+        "and": [],
+        "or": [
+            "colorful",
+            "vibrant",
+            "street"
+        ],
+        "action": []
+    },
+    "What is the largest and most populous island in Japan": {
+        "response": "Honshu",
+        "and": [],
+        "or": [
+            "largest",
+            "populous",
+            "island"
+        ],
+        "action": []
+    },
+    "What is the traditional dress of Japan": {
+        "response": "Kimono",
+        "and": [],
+        "or": [
+            "traditional",
+            "dress"
+        ],
+        "action": []
+    },
+    "What of the following forms of martial arts does not originate from Japan": {
+        "response": "Taekwondo",
+        "and": [],
+        "or": [
+            "martial",
+            "originate"
+        ],
+        "action": []
+    },
+    "Which sacred animal can you find wandering in the Nara Park": {
+        "response": "Deer",
+        "and": ["Park"],
+        "or": [
+            "aniaml",
+            "wandering"
+        ],
+        "action": []
+    },
+    "What is the symbol of Shinto, the indigenous religion in Japan": {
+        "response": "A gate",
+        "and": [
+            "Shinto"
+        ],
+        "or": [
+            "symbol",
+            "religion"
+        ],
+        "action": []
+    },
+    "Fuji is a sacred symbol of Japan. What is it actually": {
+        "response": "A mountain",
+        "and": [],
+        "or": [
+            "symbol",
+            "actually"
+        ],
+        "action": []
+    },
+    "When was the last time when Mount Fuji erupted": {
+        "response": "In 1707",
+        "and": ["Fuji"],
+        "or": [
+            "last",
+            "time"
+        ],
+        "action": []
+    },
+    "The Shinkansen is the network of high-speed railway lines in Japan. The design of the bullet trains running on this network was inspired by which animal": {
+        "response": "Kingfishers",
+        "and": ["lines"],
+        "or": [
+            "network",
+            "design",
+            "railway"
+        ],
+        "action": []
+    },
+    "Which of the following is not a typical Japanese dish": {
+        "response": "Kimchi",
+        "and": [],
+        "or": [
+            "following",
+            "typical"
+        ],
+        "action": []
+    },
+    "What do waiters or waitresses say to welcome guests in Japanese restaurants": {
+        "response": "Irasshaimase",
+        "and": [],
+        "or": [
+            "welcome",
+            "guests",
+            "waiters"
+        ],
+        "action": []
+    },
+    "What does Sushi mean in Japanese": {
+        "response": "Sour rice",
+        "and": [],
+        "or": [
+            "sushi",
+            "mean"
+        ],
+        "action": []
+    },
+    "What does a Geisha do": {
+        "response": "To perform traditional Japanese songs and dance",
+        "and": ["geisha"],
+        "or": [
+        ],
+        "action": []
+    },
+    "The U.S dropped two atomic bombs on which Japanese cities during World War II": {
+        "response": "Hiroshima and Nagasaki",
+        "and": [],
+        "or": [
+            "atomic",
+            "bombs"
+        ],
+        "action": []
+    },
+    "The Obon festival, one of the major holiday seasons in Japan, takes place during which season of the year": {
+        "response": "Summer",
+        "and": [],
+        "or": [
+            "festival",
+            "holiday"
+        ],
+        "action": []
+    },
+    "Which Emperor decided to move the capital of Japan to Tokyo from Kyoto": {
+        "response": "Emperor Meiji",
+        "and": ["capital"],
+        "or": [
+            "move",
+            "tokyo",
+            "decided"
+        ],
+        "action": []
+    },
+    "Since the end of World War II, which was the first country that Japan send the military forces": {
+        "response": "Iraq",
+        "and": [],
+        "or": [
+            "first",
+            "country",
+            "war"
+        ],
+        "action": []
+    },
+    "When will Japan host the Summer Olympic Games for the second time": {
+        "response": "2021",
+        "and": [],
+        "or": [
+            "summer",
+            "games",
+            "second"
+        ],
+        "action": []
+    },
+    "What are the prequel wizards": {
+        "response": "Copper Lightvale, Agate Lightvale, Roy Goldburn, Shane Goldburn, Mila Rutrow, Kody Fallenfire, Rin Winterway, Wing Ding Gaster, Asgore Dreemurr",
+        "and": ["prequel"],
+        "or": [],
+        "action": []
+    }
+}

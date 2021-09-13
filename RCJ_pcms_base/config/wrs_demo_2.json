@@ -1,0 +1,82 @@
+{
+    "Hey anchor, how's the weather like today": {
+        "response": "",
+        "and": [],
+        "or": [
+            "weather",
+            "today"
+        ],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-l", "bedroom"],
+            ["code", "weather"]
+        ]
+    },
+    "But where should I go": {
+        "response": "I suggest you go to the Art Macao exhibition in Macau Venetian",
+        "and": [
+            "go",
+            "where"
+        ],
+        "or": [],
+        "action": []
+    },
+    "But I want to go somewhere outdoor": {
+        "response": "I suggest you going out to the park. It’s good for your health",
+        "and": [
+            "go",
+            "outdoor"
+        ],
+        "or": [],
+        "action": []
+    },
+    "That’s a great idea. Could you help me take the drink from the kitchen": {
+        "response": "No problem",
+        "and": [
+            "take",
+            "great"
+        ],
+        "or": [
+            "drink",
+            "kitchen"
+        ],
+        "action": [
+            ["go_to_point", "--wait-until-end", "-l", "long-table"],
+            ["delay", "-s 10"],
+            ["say", "-t Have you guys voted already? 10 seconds left"],
+            ["delay", "-s 10"],
+            ["code", "grab"]
+        ]
+    },
+    "That’s nice, they are so heavy": {
+        "response": "Remember to wear on the mask",
+        "and": [],
+        "or": [
+            "nice",
+            "heavy"
+        ],
+        "action": []
+    },
+    "Thank you for the reminder, let’s head out now": {
+        "response": "Okay follow me, i will bring you to the park",
+        "and": [
+            "reminder"
+        ],
+        "or": [
+            "out"
+        ],
+        "action": [
+            ["go_to_point", "-l", "entrance"]
+        ]
+    },
+    "I feel painful, help me": {
+        "response": "",
+        "and": [],
+        "or": [
+            "painful",
+            "help"
+        ],
+        "action": [
+            ["code", "help"]
+        ]
+    }
+}
