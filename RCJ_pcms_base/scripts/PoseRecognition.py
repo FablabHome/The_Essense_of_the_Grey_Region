@@ -9,7 +9,6 @@ from cv_bridge import CvBridge
 from robot_vision_msgs.msg import HumanPoses
 from rospkg import RosPack
 from sensor_msgs.msg import CompressedImage
-from std_msgs.msg import String
 from tensorflow.keras.models import load_model
 import tensorflow as tf
 
@@ -26,7 +25,7 @@ class PoseRecognition:
         rospy.init_node('pose_recognition')
         self.pose_recognizer = pose_recognizer
         self.bridge = CvBridge()
-        
+
         self.stat_pub = rospy.Publisher(
             '~stats',
             HumanPoses,
@@ -40,7 +39,7 @@ class PoseRecognition:
             queue_size=1
         )
         rospy.Subscriber(
-            '/bottom_camera/rgb/image_raw/compressed',
+            '/bottom_camera_rotate/rgb/image_raw/compressed',
             CompressedImage,
             self.camera_callback,
             queue_size=1
@@ -94,7 +93,6 @@ class PoseRecognition:
                 preds = self.pose_recognizer.predict(
                     np.array([black_board]))[0]
 
-                rospy.loginfo(preds)
                 h_rate = np.argmax(preds)
                 status = self.labels[h_rate]
                 pose.pose = status
@@ -110,11 +108,14 @@ class PoseRecognition:
 
                 box.draw(frame, color=color)
                 box.putText_at_top(frame, f'{status}', color, 2, 0.9)
-                self.stat_pub.publish(status)
 
-            frame = cv.resize(frame, (640 * 2, 480 * 2))
+            msg = HumanPoses()
+            msg.poses = poses
+            self.stat_pub.publish(msg)
             cv.imshow('frame', frame)
-            cv.waitKey(1)
+            key = cv.waitKey(1) & 0xFF
+            if key in [27, ord('q')]:
+                break
 
 
 if __name__ == '__main__':
