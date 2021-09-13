@@ -55,7 +55,7 @@ class FaceMaskDetsNode:
         )
 
         rospy.set_param('~kill', False)
-        rospy.set_param('~lock', False)
+        rospy.set_param('~lock', True)
 
         self.bridge = CvBridge()
         self.get_faces = ObjectBoxes()

@@ -25,7 +25,7 @@ class ManipulatorGrab:
     FOV_H = 60
     FOV_V = 49.5
 
-    CAMERA_ANGLE = -16
+    CAMERA_ANGLE = -13
 
     W = 640
     H = 480
@@ -46,6 +46,7 @@ class ManipulatorGrab:
 
         rospy.set_param('~grabbed', False)
         rospy.set_param('~lock', True)
+        rospy.set_param('~bottle', 0)
         rospy.set_param('~place', False)
         rospy.set_param('~placed', False)
 
@@ -79,7 +80,7 @@ class ManipulatorGrab:
         bottle_boxes = sorted(bottle_boxes, key=lambda b: b.x1)
         self.srcframe = self.bridge.compressed_imgmsg_to_cv2(boxes.source_img)
         if len(bottle_boxes) > 0:
-            self.bottle_box = bottle_boxes[-1]
+            self.bottle_box = bottle_boxes[rospy.get_param('~bottle')]
         else:
             self.bottle_box = None
 
@@ -232,6 +233,7 @@ class ManipulatorGrab:
             last_cz = cz = 0
             last_box = copy(box)
             turned = False
+            forwarded = False
             while not rospy.is_shutdown():
                 box = copy(self.bottle_box)
                 if box is None:
@@ -240,33 +242,43 @@ class ManipulatorGrab:
                 cx = box.x1 + (box.x2 - box.x1) // 2
                 cy = box.y1 + (box.y2 - box.y1) // 2
 
-                depth_img = rospy.wait_for_message('/bottom_camera/depth/image_raw', Image)
+                depth_img = rospy.wait_for_message('/bottom_camera_rotate/depth/image_raw', Image)
                 depth_img = self.bridge.imgmsg_to_cv2(depth_img)
                 cz = self.__avoid_zeropoints((cx, cy), depth_img, limit=20)
                 # cz = depth_img[cy, cx]
                 rospy.loginfo(f'\t\t{cz}')
                 cz = cz if cz != -1 else last_cz
-                if cz == 0: continue
-                rx, ry, rz = self.real_xyz(cx, cy, cz)
-                rx -= 15
+                if cz == 0 and turned: continue
+                _, _, rz = self.real_xyz(cx, cy, cz)
+                # cx += 8
 
                 t = Twist()
-                rospy.loginfo(f'\t{rx}, {rz}')
+                rospy.loginfo(f'\t{cx}, {rz}')
 
-                if abs(rx) > 30 and not turned:
-                    t.angular.z = 0.02 if rx > 20 else -0.02
+                val = 290 if cx < 320 else 320
+
+                if abs(cx - val) > 5 and not turned:
+                    t.angular.z = -0.02 if cx > val else 0.02
                     self.twist_pub.publish(t)
                 else:
+                    # if abs(rx - last_rx) > 10:
+                    #     continue
                     turned = True
-                    if rz - 570 > 4:
-                        rospy.loginfo('test')
-                        t.linear.x = 0.05
+                    if rz - 610 > 4 and not forwarded:
+                        t.linear.x = 0.07
                         self.twist_pub.publish(t)
                     else:
-                        break
+                        forwarded = True
+                        if abs(cx - val) > 2:
+                            rospy.loginfo('hi')
+                            t.angular.z = -0.01 if cx > val else 0.01
+                            self.twist_pub.publish(t)
+                        else:
+                            break
 
                 last_cz = cz
                 last_box = copy(box)
+                # last_rx = rx
 
             # self.yolo_sub.unregister()
             # cx = box.x1 + (box.x2 - box.x1) // 2
@@ -297,6 +309,8 @@ class ManipulatorGrab:
             self.move_to(z / 2, 0, y, 1)
             rospy.sleep(1)
             self.move_to(z, 0, y, 2)
+            rospy.sleep(2)
+            self.move_to(z / 0.8, 0, y, 2)
             rospy.sleep(2)
             # self.move_to(z, 0, y, 1)
             # rospy.sleep(1)
@@ -338,7 +352,10 @@ class ManipulatorGrab:
         t = Twist()
         t.linear.x = -0.2
         self.twist_pub.publish(t)
-        rospy.sleep(2)
+        rospy.sleep(1)
+        t.linear.x = -0.1
+        self.twist_pub.publish(t)
+        rospy.sleep(1)
 
         self.move_to(0.13, 0.0, 0.154, 1)
         rospy.sleep(1)
@@ -348,8 +365,8 @@ class ManipulatorGrab:
         self.move_to(0.130, 0.0, 0.126, 1.5)
         rospy.sleep(1.5)
 
-        self.set_joints(pi / 2, -1.601, 1.374, 0.238, 2)
-        rospy.sleep(1.5)
+        # self.set_joints(pi / 2, -1.601, 1.374, 0.238, 2)
+        # rospy.sleep(1.5)
 
         # self.move_to(0.135, 0, 0.238, 1)
         # rospy.sleep(1)
@@ -361,17 +378,20 @@ class ManipulatorGrab:
         # self.move_to(0.13, 0.0, 0.114, 1)
         # rospy.sleep(1)
         #
-        # self.set_joints(pi, -1.652, 1.473, 0.212, 2)
-        # rospy.sleep(2)
-        #
-        # self.set_gripper(0.01, 2)
-        # rospy.sleep(2)
-        #
-        # self.set_joints(pi, -1.652, 0.949, 0.212, 2)
-        # rospy.sleep(2)
-        #
-        # self.set_joints(pi / 2, -1.652, 0.949, 0.212, 2)
-        # rospy.sleep(2)
+        self.set_joints(pi, -1.652, 1.473, 0.212, 2)
+        rospy.sleep(2)
+
+        self.set_gripper(0.01, 2)
+        rospy.sleep(2)
+
+        self.set_joints(pi, -1.652, 0.949, 0.212, 2)
+        rospy.sleep(2)
+
+        self.set_joints(pi / 2, -1.652, 0.949, 0.212, 2)
+        rospy.sleep(2)
+
+        self.set_joints(pi / 2, -1.652, 1.473, 0.212, 2)
+        rospy.sleep(2)
 
         rospy.set_param('~grabbed', True)
         while not rospy.get_param('~place'):

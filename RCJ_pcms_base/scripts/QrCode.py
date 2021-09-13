@@ -38,7 +38,7 @@ speaker_pub = rospy.Publisher(
 
 
 rospy.Subscriber(
-    '/top_camera/rgb/image_raw/compressed',
+    '/bottom_camera_rotate/rgb/image_raw/compressed',
     CompressedImage,
     callback,
     queue_size=1

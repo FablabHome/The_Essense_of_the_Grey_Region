@@ -1,11 +1,10 @@
 <launch>
-    <include file="$(find rcj_pcms_base)/launch/FaceDetection.launch"/>
-    <include file="$(find rcj_pcms_base)/launch/FaceMaskDetection.launch"/>
+<!--    <include file="$(find rcj_pcms_base)/launch/FaceDetection.launch"/>-->
+<!--    <include file="$(find rcj_pcms_base)/launch/FaceMaskDetection.launch"/>-->
 <!--    <include file="$(find rcj_pcms_base)/launch/YOLODetection.launch">-->
-<!--        <arg name="image_source" value="/bottom_camera/rgb/image_raw/compressed"/>-->
-<!--        <arg name="reverse" value="true"/>-->
+<!--        <arg name="image_source" value="/bottom_camera_rotate/rgb/image_raw/compressed"/>-->
 <!--    </include>-->
-    <include file="$(find rcj_pcms_base)/launch/GenderAgeDetection.launch"/>
+<!--    <include file="$(find rcj_pcms_base)/launch/GenderAgeDetection.launch"/>-->
     <node
         pkg="rcj_pcms_base"
         name="acp"
@@ -13,10 +12,17 @@
         required="true"
         output="screen"
     />
+<!--    <node-->
+<!--        pkg="rcj_pcms_base"-->
+<!--        name="show_face_detections"-->
+<!--        type="ShowFaceDetections.py"-->
+<!--        required="true"-->
+<!--        output="screen"-->
+<!--    />-->
     <node
         pkg="rcj_pcms_base"
-        name="show_face_detections"
-        type="ShowFaceDetections.py"
+        name="pose_recognition"
+        type="PoseRecognition.py"
         required="true"
         output="screen"
     />
