@@ -13,8 +13,10 @@ from open_manipulator_msgs.srv import SetKinematicsPose, SetKinematicsPoseReques
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
+from core.Nodes import Node
 
-class ManipulatorGrab:
+
+class ManipulatorGrab(Node):
     MANI_SRV_NAME = '/goal_task_space_path_position_only'
     MANI_GRIPPER_SRV_NAME = '/goal_tool_control'
     MANI_JOINT_SRV_NAME = '/goal_joint_space_path'
@@ -433,13 +435,15 @@ class ManipulatorGrab:
         rospy.sleep(2)
         rospy.set_param('~placed', True)
 
-
         '''
         On manipulator:
         x = z
         y = x
         z = y
         '''
+
+    def reset(self):
+        pass
 
 
 if __name__ == '__main__':

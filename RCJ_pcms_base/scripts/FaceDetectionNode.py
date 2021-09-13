@@ -30,9 +30,11 @@ from cv_bridge import CvBridge
 from home_robot_msgs.msg import ObjectBoxes, ObjectBox
 from sensor_msgs.msg import CompressedImage
 
+from core.Nodes import Node
 
-class FaceDetectionNode:
-    def __init__(self, face_detector):
+
+class FaceDetectionNode(Node):
+    def __init__(self, face_detector: cv.dnn_Net):
         self.face_detector = face_detector
 
         self.face_pub = rospy.Publisher(
@@ -104,6 +106,9 @@ class FaceDetectionNode:
 
             face_msg.source_img = self.bridge.cv2_to_compressed_imgmsg(frame)
             self.face_pub.publish(face_msg)
+
+    def reset(self):
+        pass
 
 
 if __name__ == '__main__':

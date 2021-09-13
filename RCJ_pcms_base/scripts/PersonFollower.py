@@ -27,9 +27,8 @@ SOFTWARE.
 from collections import deque
 from os import path
 
-import color_transfer
-import matplotlib.pyplot as plt
 import cv2 as cv
+import matplotlib.pyplot as plt
 import numpy as np
 import rospy
 from cv_bridge import CvBridge
@@ -40,9 +39,10 @@ from sensor_msgs.msg import CompressedImage
 
 from core.Detection import PersonReidentification
 from core.Dtypes import BBox
+from core.Nodes import Node
 
 
-class PersonFollower:
+class PersonFollower(Node):
     H = 480
     W = 640
     CENTROID = (W // 2, H // 2)
@@ -301,6 +301,9 @@ class PersonFollower:
         plt.savefig('with_color_transfer.png')
         plt.show()
         rospy.loginfo(np.mean(similarities))
+
+    def reset(self):
+        pass
 
 
 if __name__ == '__main__':

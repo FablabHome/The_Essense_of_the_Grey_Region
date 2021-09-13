@@ -2,13 +2,15 @@
 from copy import copy
 
 import cv2 as cv
+import message_filters
 import rospy
 from cv_bridge import CvBridge
 from home_robot_msgs.msg import ObjectBoxes
-import message_filters
+
+from core.Nodes import Node
 
 
-class ShowFaceDetections:
+class ShowFaceDetections(Node):
     MASK_VALID_COLOR = (32, 255, 0)
     MASK_INVALID_COLOR = (32, 0, 255)
 
@@ -78,6 +80,9 @@ class ShowFaceDetections:
             key = cv.waitKey(1) & 0XFF
             if key in [27, ord('q')]:
                 break
+
+    def reset(self):
+        pass
 
 
 if __name__ == '__main__':

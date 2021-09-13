@@ -30,8 +30,10 @@ import rospy
 from cv_bridge import CvBridge
 from home_robot_msgs.msg import ObjectBoxes
 
+from core.Nodes import Node
 
-class GenderDetectionNode:
+
+class GenderDetectionNode(Node):
     def __init__(self, age_gender: cv.dnn_Net):
         self.ag_recognizer = age_gender
 
@@ -92,6 +94,9 @@ class GenderDetectionNode:
             # if key in [27, ord('q')]:
             #     break
             self.result_pub.publish(faces)
+
+    def reset(self):
+        pass
 
 
 if __name__ == '__main__':

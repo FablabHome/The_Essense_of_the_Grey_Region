@@ -8,8 +8,10 @@ from home_robot_msgs.msg import PFWaypoints, PFWaypoint
 from tf.transformations import euler_from_quaternion
 from visualization_msgs.msg import Marker, MarkerArray
 
+from core.Nodes import Node
 
-class WayPointRecorder:
+
+class WayPointRecorder(Node):
     # Waypoint recording parameters
     MAX_RECORDS = 60
     UPDATE_DURATION = 0.1
@@ -185,6 +187,9 @@ class WayPointRecorder:
             serialized_waypoints = list(map(lambda pos: PFWaypoint(pos[0], pos[1], pos[2]), self.waypoints))
             self.visualization_pub.publish(marker_array)
             self.waypoints_pub.publish(PFWaypoints(serialized_waypoints))
+
+    def reset(self):
+        pass
 
 
 if __name__ == '__main__':

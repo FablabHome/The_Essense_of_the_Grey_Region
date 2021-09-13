@@ -5,22 +5,24 @@ from os import path
 import cv2 as cv
 import numpy as np
 import rospy
+import tensorflow as tf
 from cv_bridge import CvBridge
 from robot_vision_msgs.msg import HumanPoses
 from rospkg import RosPack
 from sensor_msgs.msg import CompressedImage
 from tensorflow.keras.models import load_model
-import tensorflow as tf
 
 from core.Dtypes import PoseGesture
+from core.Nodes import Node
 
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.2)
 cfgs = tf.compat.v1.ConfigProto(gpu_options=opts)
 sess = tf.compat.v1.Session(config=cfgs)
 
 
-class PoseRecognition:
+class PoseRecognition(Node):
     def __init__(self, pose_recognizer):
         rospy.init_node('pose_recognition')
         self.pose_recognizer = pose_recognizer
@@ -116,6 +118,9 @@ class PoseRecognition:
             key = cv.waitKey(1) & 0xFF
             if key in [27, ord('q')]:
                 break
+
+    def reset(self):
+        pass
 
 
 if __name__ == '__main__':

@@ -32,6 +32,8 @@ import tensorflow as tf
 from cv_bridge import CvBridge
 from home_robot_msgs.msg import ObjectBoxes
 
+from core.Nodes import Node
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0'
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 opts = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.2)
@@ -39,7 +41,7 @@ cfgs = tf.compat.v1.ConfigProto(gpu_options=opts)
 sess = tf.compat.v1.Session(config=cfgs)
 
 
-class FaceMaskDetsNode:
+class FaceMaskDetsNode(Node):
     def __init__(self, mask_detector: tf.keras.Model):
         self.mask_detector = mask_detector
         self.mask_status_pub = rospy.Publisher(
@@ -83,6 +85,9 @@ class FaceMaskDetsNode:
 
             if rospy.get_param('~kill'):
                 return
+
+    def reset(self):
+        pass
 
 
 if __name__ == '__main__':

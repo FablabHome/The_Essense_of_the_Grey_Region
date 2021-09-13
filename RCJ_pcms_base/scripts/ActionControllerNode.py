@@ -24,20 +24,17 @@ SOFTWARE.
 
 """
 
-from core.base_classes import Node
-from core.Nodes import ActionController
-
-from std_msgs.msg import String
+import rospy
 from home_robot_msgs.msg import CommandData
 from mr_voice.msg import Voice
+from std_msgs.msg import String
 
-import rospy
+from core.Nodes import ActionController
+from core.Nodes import Node
 
 
 class ActionControllerNode(Node):
-    def __init__(self, name: str = 'acp', anonymous: bool = False):
-        super(ActionControllerNode, self).__init__(name=name, anonymous=anonymous)
-
+    def __init__(self):
         self.acp_program = ActionController(node_id=self.name, config_file='./config/wrs_demo_2.json')
 
         # Create result publisher
@@ -98,10 +95,14 @@ class ActionControllerNode(Node):
                 self.processed_result_publisher.publish(self.result)
             self.is_running = False
 
+    def main(self):
+        pass
+
     def reset(self):
         self.result = CommandData()
 
 
 if __name__ == '__main__':
-    ac_node = ActionControllerNode(name='acp')
+    rospy.init_node('acp')
+    ac_node = ActionControllerNode()
     ac_node.spin()
