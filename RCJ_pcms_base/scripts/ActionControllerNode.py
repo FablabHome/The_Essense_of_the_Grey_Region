@@ -28,7 +28,8 @@ from core.base_classes import Node
 from core.Nodes import ActionController
 
 from std_msgs.msg import String
-from home_robot_msgs.msg import CommandData, Voice
+from home_robot_msgs.msg import CommandData
+from mr_voice.msg import Voice
 
 import rospy
 
@@ -37,7 +38,7 @@ class ActionControllerNode(Node):
     def __init__(self, name: str = 'acp', anonymous: bool = False):
         super(ActionControllerNode, self).__init__(name=name, anonymous=anonymous)
 
-        self.acp_program = ActionController(node_id=self.name, config_file='./config/test_switching_keyword.json')
+        self.acp_program = ActionController(node_id=self.name, config_file='./config/wrs_demo_2.json')
 
         # Create result publisher
         self.processed_result_publisher = rospy.Publisher(

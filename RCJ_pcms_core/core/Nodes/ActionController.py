@@ -122,7 +122,7 @@ class ActionController(NodeProgram):
 
     @staticmethod
     def _input_text_processor(text):
-        return text.strip().lower()
+        return text.strip().lower().split()
 
     def _has_require_keywords(self, text):
         input_text = self._input_text_processor(text)
@@ -131,7 +131,7 @@ class ActionController(NodeProgram):
             return
 
         for require_keyword in self.require_keywords:
-            require_keyword = self._input_text_processor(require_keyword)
+            require_keyword = self._input_text_processor(require_keyword)[0]
             if require_keyword not in input_text:
                 self.require_keywords_status = False
                 break
@@ -145,7 +145,7 @@ class ActionController(NodeProgram):
             return
 
         for separately_keyword in self.separately_keywords:
-            separately_keyword = self._input_text_processor(separately_keyword)
+            separately_keyword = self._input_text_processor(separately_keyword)[0]
             if separately_keyword in input_text:
                 self.separately_keywords_status = True
                 break
