@@ -1,9 +1,0 @@
-{
-    "Stop following me": {
-        "response": "Give me a nut",
-        "require": ["Stop", "Following"],
-        "separately": ["me", "now"],
-        "action": ["say.py", "-t 'Give me a nut'"],
-        "wait": true
-    }
-}
