@@ -8,7 +8,7 @@ slots:
 utterances:
   - Turn on the lights in the [room](kitchen)
   - give me some light in the [room](bathroom) please
-  - Can you light up the [room](living room) ?
+  - Can you light up the [room](living room)?
   - switch the [room](bedroom)'s lights on please
 
 # turnLightOff intent
