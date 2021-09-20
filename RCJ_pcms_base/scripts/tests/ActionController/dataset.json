@@ -1,34 +1,5 @@
 {
   "entities": {
-    "city": {
-      "automatically_extensible": false,
-      "data": [
-        {
-          "synonyms": [],
-          "value": "hong kong"
-        },
-        {
-          "synonyms": [
-            "capital of gambling"
-          ],
-          "value": "macau"
-        },
-        {
-          "synonyms": [
-            "city of lights"
-          ],
-          "value": "paris"
-        },
-        {
-          "synonyms": [
-            "big apple"
-          ],
-          "value": "new york"
-        }
-      ],
-      "matching_strictness": 1.0,
-      "use_synonyms": true
-    },
     "room": {
       "automatically_extensible": false,
       "data": [
@@ -54,6 +25,12 @@
       "matching_strictness": 1.0,
       "use_synonyms": true
     },
+    "snips/City": {
+      "automatically_extensible": true,
+      "data": [],
+      "matching_strictness": 1.0,
+      "use_synonyms": true
+    },
     "snips/datetime": {},
     "snips/temperature": {}
   },
@@ -74,7 +51,7 @@
               "text": " in "
             },
             {
-              "entity": "city",
+              "entity": "snips/City",
               "slot_name": "city",
               "text": "Macau"
             },
@@ -89,7 +66,7 @@
               "text": "How's the weather like in "
             },
             {
-              "entity": "city",
+              "entity": "snips/City",
               "slot_name": "city",
               "text": "Macau"
             },
@@ -120,7 +97,7 @@
               "text": " in "
             },
             {
-              "entity": "city",
+              "entity": "snips/City",
               "slot_name": "city",
               "text": "Macau"
             },
@@ -135,7 +112,7 @@
               "text": "How was the weather like in "
             },
             {
-              "entity": "city",
+              "entity": "snips/City",
               "slot_name": "city",
               "text": "Macau"
             },
@@ -166,7 +143,7 @@
               "text": " in "
             },
             {
-              "entity": "city",
+              "entity": "snips/City",
               "slot_name": "city",
               "text": "New York"
             },
@@ -189,7 +166,7 @@
               "text": " in "
             },
             {
-              "entity": "city",
+              "entity": "snips/City",
               "slot_name": "city",
               "text": "Hong Kong"
             },
@@ -383,7 +360,7 @@
               "text": "living room"
             },
             {
-              "text": " ?"
+              "text": "?"
             }
           ]
         },

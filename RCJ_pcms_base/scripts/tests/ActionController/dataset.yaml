@@ -45,7 +45,7 @@ type: intent
 name: getTemperature
 slots:
   - name: city
-    entity: city
+    entity: snips/City
   - name: date
     entity: snips/datetime
 utterances:
@@ -65,14 +65,3 @@ values:
 - bedroom
 - [living room, main room, lounge]
 - [garden, yard, backyard]
-
-# city entity
----
-type: entity
-name: city
-automatically_extensible: no
-values:
-  - hong kong
-  - [macau, capital of gambling]
-  - [paris, city of lights]
-  - [new york, big apple]
