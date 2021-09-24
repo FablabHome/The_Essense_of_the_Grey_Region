@@ -29,7 +29,7 @@ from home_robot_msgs.msg import CommandData
 from mr_voice.msg import Voice
 from std_msgs.msg import String
 
-from core.Nodes import ActionController
+from core.Nodes.ActionController import ActionController
 from core.Nodes import Node
 
 
