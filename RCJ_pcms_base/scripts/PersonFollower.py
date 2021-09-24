@@ -28,7 +28,6 @@ from collections import deque
 from os import path
 
 import cv2 as cv
-import matplotlib.pyplot as plt
 import numpy as np
 import rospy
 from cv_bridge import CvBridge
@@ -206,15 +205,6 @@ class PersonFollower(Node):
                     dist_between_target = self.last_box.calc_distance_between_point(person_box.centroid)
                     self.distance_and_boxes.update({dist_between_target: person_box})
 
-                # # Matching styles with the original front and back image
-                # matched_front = color_transfer.color_transfer(self.front_img, source_img)
-                # matched_back = color_transfer.color_transfer(self.back_img, source_img)
-                # matched_front = source_img
-                # matched_back = source_img
-
-                # Parse the current descriptor
-                # matched_front_desc = self.person_extractor.parse_descriptor(matched_front, crop=False)
-                # matched_back_desc = self.person_extractor.parse_descriptor(matched_back, crop=False)
                 current_descriptor = self.person_extractor.parse_descriptor(source_img, crop=False)
 
                 # Compare the similarity
@@ -225,7 +215,6 @@ class PersonFollower(Node):
                     max_similarity = n
                 # rospy.loginfo(f'{front_similarity},{back_similarity}')
 
-                # if self.max_distance < distance_between_centroid < 250:
                 if self.__similarity_lt(front_similarity) or self.__similarity_lt(back_similarity):
                     # cv.imshow('matched_front', matched_front)
                     # cv.imshow('matched_back', matched_back)
