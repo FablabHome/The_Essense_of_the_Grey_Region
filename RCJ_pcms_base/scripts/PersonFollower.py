@@ -286,7 +286,7 @@ class PersonFollower(Node):
             # drown_image = node.bridge.cv2_to_compressed_imgmsg(rgb_image)
             # node.image_publisher.publish(drown_image)
 
-            frame = srcframe
+            frame = srcframe.copy()
             cv.imshow('frame', frame)
             key = cv.waitKey(1)
             rospy.set_param('~state', PersonFollower.STATE)
@@ -294,13 +294,13 @@ class PersonFollower(Node):
                 break
 
         cv.destroyAllWindows()
-        plt.title('Stage 2 single person dark similarity test')
-        axes = plt.gca()
-        axes.set_ylim([0.0, 1.0])
-        plt.plot(similarities)
-        plt.savefig('with_color_transfer.png')
-        plt.show()
-        rospy.loginfo(np.mean(similarities))
+        # plt.title('Stage 2 single person dark similarity test')
+        # axes = plt.gca()
+        # axes.set_ylim([0.0, 1.0])
+        # plt.plot(similarities)
+        # # plt.savefig('with_color_transfer.png')
+        # plt.show()
+        # rospy.loginfo(np.mean(similarities))
 
     def reset(self):
         pass
