@@ -86,10 +86,8 @@ class PersonFollower(Node):
         # This variable is to monitor if the target is recognized in that loop
         self.recognized = False
 
-        # self.max_distance = 0
-
+        # Initialization host building
         self.initialized = False
-
         rospy.Service('pf_initialize', PFInitializer, self.initialized_cb)
 
         self.robot_handler_publisher = rospy.Publisher(
@@ -230,9 +228,11 @@ class PersonFollower(Node):
                     # cv.imshow('matched_back', matched_back)
                     # cv.imshow('front_img', self.front_img)
 
+                    # Append the status queue
                     self.status_queue.append(True)
                     self.recognized = True
 
+                    # Confirmation with status queue if the state was LOST
                     if PersonFollower.STATE == 'LOST':
                         if not all(self.status_queue):
                             continue
@@ -258,6 +258,7 @@ class PersonFollower(Node):
                         #     self.tmp_box = self.distance_and_boxes[min(self.distance_and_boxes.keys())]
                         #     msg.follow_point = self.tmp_box.centroid
                         #     # Draw box and update waypoint_color
+                        # Follow the last exist box's centroid
                         self.tmp_box = self.last_box
                         msg.follow_point = self.tmp_box.centroid
                         self.__draw_box_and_centroid(srcframe, self.tmp_box, (32, 255, 255), 5, 5)
