@@ -30,7 +30,7 @@ import cv2 as cv
 import rospy
 from cv_bridge import CvBridge
 from home_robot_msgs.msg import ObjectBoxes, ObjectBox
-from home_robot_msgs.srv import PFInitializerRequest
+from home_robot_msgs.srv import PFInitializer, PFInitializerRequest
 from mr_voice.srv import SpeakerSrv
 from rospkg import RosPack
 from sensor_msgs.msg import CompressedImage
@@ -85,7 +85,7 @@ class PFInitialize(Node):
             queue_size=1
         )
         self.speaker_srv = rospy.ServiceProxy('/speaker/text', SpeakerSrv)
-        self.call_person_follower = rospy.ServiceProxy('pf_initialize', PFInitialize)
+        self.call_person_follower = rospy.ServiceProxy('pf_initialize', PFInitializer)
         rospy.set_param('~initialized', False)
 
         self.bridge = CvBridge()
