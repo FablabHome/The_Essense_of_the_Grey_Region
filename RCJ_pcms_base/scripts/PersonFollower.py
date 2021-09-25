@@ -42,7 +42,6 @@ from core.Nodes import Node
 
 
 class PersonFollower(Node):
-    # TODO: Add a CONFIRM state for the states queue
     # Unconfirmed TODO: Separate the showing fragment to another node like ShowFaceResult
     H = 480
     W = 640
@@ -236,6 +235,7 @@ class PersonFollower(Node):
 
                     # Confirmation with status queue if the state was LOST
                     if PersonFollower.STATE == 'LOST':
+                        PersonFollower.STATE = 'CONFIRMING'
                         if not all(self.status_queue):
                             continue
                         PersonFollower.STATE = 'NORMAL'
