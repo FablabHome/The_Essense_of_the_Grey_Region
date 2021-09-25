@@ -3,7 +3,7 @@
     <node
         name="pf_initializer"
         pkg="rcj_pcms_base"
-        type="PFInitializer.py"
+        type="PFInitialize.py"
         required="false"
         output="screen"
     />
