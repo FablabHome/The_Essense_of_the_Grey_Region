@@ -67,7 +67,7 @@ face_xml_path = path.join(
 )
 
 pose_recognizer = path.join(
-    base, '../models/PoseDetection/model.h5'
+    base, '../models/PoseRecognition/model.h5'
 )
 
 pose = OpenPose(model_path=openpose_model_path, proto_path=openpose_prototxt_path)

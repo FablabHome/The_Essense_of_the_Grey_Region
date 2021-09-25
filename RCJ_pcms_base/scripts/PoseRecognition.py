@@ -26,7 +26,7 @@ class PoseRecognition(Node):
     def __init__(self):
         super(PoseRecognition, self).__init__('pose_recognition')
         base = RosPack().get_path('rcj_pcms_base') + '/..'
-        pose_recognizer_path = path.join(base, 'models/PoseDetection/model_6.h5')
+        pose_recognizer_path = path.join(base, 'models/PoseRecognition/model_6.h5')
         self.pose_recognizer = load_model(pose_recognizer_path)
 
         self.bridge = CvBridge()

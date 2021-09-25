@@ -24,7 +24,7 @@ pose = OpenPose(model_path=openpose_model_path, proto_path=openpose_prototxt_pat
 cap = cv.VideoCapture(0)
 
 print('loading_model')
-pose_recognize_model = load_model(path.relpath("../models/PoseDetection/model_0611.h5"))
+pose_recognize_model = load_model(path.relpath("../models/PoseRecognition/model_0611.h5"))
 print('model lodaded')
 label = []
 f = open(path.relpath("../../model_data/PoseDetection/model.txt"))
