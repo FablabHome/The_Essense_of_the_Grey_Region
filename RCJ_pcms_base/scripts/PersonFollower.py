@@ -39,6 +39,7 @@ from sensor_msgs.msg import CompressedImage
 from core.Detection import PersonReidentification
 from core.Dtypes import BBox
 from core.Nodes import Node
+from core.utils.config import ROS_RATE
 
 
 class PersonFollower(Node):
@@ -56,12 +57,19 @@ class PersonFollower(Node):
     WAYPOINT_MAX_RADIUS = 12
     WAYPOINT_THICKNESS = 2  # If thickness is -1 than the circle will be filled
 
-    # Continuously collect descriptors settings
-    DESCRIPTORS_COUNT = 20  # Descriptors maxlength
-    COLLECT_TIMEOUT = 1  # Collecting timeout
+    # The duration of person reid if the state was LOST
+    PERSON_REID_DURATION = 1
 
-    def __init__(self, person_extractor: PersonReidentification):
-        self.person_extractor = person_extractor
+    def __init__(self):
+        super(PersonFollower, self).__init__('person_follower')
+        base = RosPack().get_path('rcj_pcms_base') + '/..'
+        bin_path = path.join(
+            base, 'models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.bin')
+        xml_path = path.join(
+            base, 'models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.xml')
+        net = cv.dnn.readNet(bin_path, xml_path)
+        self.person_desc_extractor = PersonReidentification(net)
+
         self.bridge = CvBridge()
 
         self.front_descriptor = self.back_descriptor = None
@@ -72,7 +80,13 @@ class PersonFollower(Node):
         self.detection_boxes = []
         self.distance_and_boxes = {}
         self.waypoints = []
-        self.descriptors = deque([], maxlen=PersonFollower.DESCRIPTORS_COUNT)
+
+        # Record the statuses for re-identification
+        q_len = PersonFollower.PERSON_REID_DURATION / (1 / ROS_RATE)
+        self.status_queue = deque([True], maxlen=int(q_len))
+        # This variable is to monitor if the target is recognized in that loop
+        self.recognized = False
+
         # self.max_distance = 0
 
         self.initialized = False
@@ -169,10 +183,9 @@ class PersonFollower(Node):
     def main(self):
         # Initialize the timeouts
         lost_timeout = rospy.get_rostime() + PersonFollower.LOST_TIMEOUT
-        # confirm_timeout = rospy.get_rostime() + PersonFollower.CONFIRM_TIMEOUT
-        waypoint_color = (32, 255, 0)
 
-        similarities = []
+        # Initialize the waypoint color
+        waypoint_color = (32, 255, 0)
 
         while not rospy.is_shutdown():
             srcframe = self.rgb_image
@@ -180,12 +193,13 @@ class PersonFollower(Node):
                 continue
 
             self.distance_and_boxes = {}
-            # Update self.last_box if the first target_box was confirmed
+            # Update self.last_box only if the target_box was confirmed
             if self.target_box is not None:
                 self.last_box = self.target_box
             self.target_box = self.tmp_box = None
 
-            max_similarity = 0.
+            self.recognized = False
+
             for det_box in self.detection_boxes:
                 # Unpack the source image
                 source_img = self.bridge.compressed_imgmsg_to_cv2(det_box.source_img)
@@ -205,28 +219,32 @@ class PersonFollower(Node):
                     dist_between_target = self.last_box.calc_distance_between_point(person_box.centroid)
                     self.distance_and_boxes.update({dist_between_target: person_box})
 
-                current_descriptor = self.person_extractor.parse_descriptor(source_img, crop=False)
+                current_descriptor = self.person_desc_extractor.parse_descriptor(source_img, crop=False)
 
                 # Compare the similarity
                 front_similarity = self.__compare_descriptor(current_descriptor, self.front_descriptor)
                 back_similarity = self.__compare_descriptor(current_descriptor, self.back_descriptor)
-                n = max(front_similarity, back_similarity)
-                if front_similarity > n:
-                    max_similarity = n
                 # rospy.loginfo(f'{front_similarity},{back_similarity}')
 
                 if self.__similarity_lt(front_similarity) or self.__similarity_lt(back_similarity):
                     # cv.imshow('matched_front', matched_front)
                     # cv.imshow('matched_back', matched_back)
                     # cv.imshow('front_img', self.front_img)
-                    PersonFollower.STATE = 'NORMAL'
+
+                    self.status_queue.append(True)
+                    self.recognized = True
+
+                    if PersonFollower.STATE == 'LOST':
+                        if not all(self.status_queue):
+                            continue
+                        PersonFollower.STATE = 'NORMAL'
+
                     self.target_box = person_box
                     self.__draw_box_and_centroid(srcframe, self.target_box, (32, 255, 0), 9, 9)
-                    self.descriptors.append(current_descriptor)
-                    similarities.append(n)
 
             msg = PFRobotData()
             msg.follow_point = (-1, -1)
+
             # Publishing data to the robot handler
             if self.target_box is None:
                 if PersonFollower.STATE == 'NORMAL':
@@ -236,17 +254,20 @@ class PersonFollower(Node):
                     if rospy.get_rostime() - lost_timeout >= rospy.Duration(0):
                         PersonFollower.STATE = 'LOST'
                     else:
-                        if len(self.distance_and_boxes) > 0:
-                            # Use the box closest to the last existance of the target
-                            self.tmp_box = self.distance_and_boxes[min(self.distance_and_boxes.keys())]
-                            msg.follow_point = self.tmp_box.centroid
-                            # Draw box and update waypoint_color
-                            self.__draw_box_and_centroid(srcframe, self.tmp_box, (32, 255, 255), 5, 5)
-                            waypoint_color = (32, 255, 255)
-                    similarities.append(max_similarity)
+                        # if len(self.distance_and_boxes) > 0:
+                        #     # Use the box closest to the last existence of the target
+                        #     self.tmp_box = self.distance_and_boxes[min(self.distance_and_boxes.keys())]
+                        #     msg.follow_point = self.tmp_box.centroid
+                        #     # Draw box and update waypoint_color
+                        self.tmp_box = self.last_box
+                        msg.follow_point = self.tmp_box.centroid
+                        self.__draw_box_and_centroid(srcframe, self.tmp_box, (32, 255, 255), 5, 5)
+                        waypoint_color = (32, 255, 255)
 
                 elif PersonFollower.STATE == 'LOST':
                     msg.follow_point = (-1, -1)
+                    if not self.recognized:
+                        self.status_queue.append(False)
             else:
                 msg.follow_point = self.target_box.centroid
                 waypoint_color = (32, 255, 0)
@@ -283,25 +304,11 @@ class PersonFollower(Node):
                 break
 
         cv.destroyAllWindows()
-        # plt.title('Stage 2 single person dark similarity test')
-        # axes = plt.gca()
-        # axes.set_ylim([0.0, 1.0])
-        # plt.plot(similarities)
-        # # plt.savefig('with_color_transfer.png')
-        # plt.show()
-        # rospy.loginfo(np.mean(similarities))
+        self.rate.sleep()
 
     def reset(self):
         pass
 
 
 if __name__ == '__main__':
-    rospy.init_node('person_follower')
-    base = RosPack().get_path('rcj_pcms_base') + '/..'
-    bin_path = path.join(
-        base, 'models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.bin')
-    xml_path = path.join(
-        base, 'models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.xml')
-    net = cv.dnn.readNet(bin_path, xml_path)
-    person_descriptor_extractor = PersonReidentification(net)
-    node = PersonFollower(person_descriptor_extractor)
+    node = PersonFollower()
