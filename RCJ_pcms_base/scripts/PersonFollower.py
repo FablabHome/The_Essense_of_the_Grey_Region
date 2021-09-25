@@ -39,6 +39,7 @@ from sensor_msgs.msg import CompressedImage
 from core.Detection import PersonReidentification
 from core.Dtypes import BBox
 from core.Nodes import Node
+from core.utils.config import ROS_RATE
 
 
 class PersonFollower(Node):
@@ -81,13 +82,15 @@ class PersonFollower(Node):
         self.waypoints = []
 
         # Record the statuses for re-identification
-        q_len = PersonFollower.PERSON_REID_DURATION / (1 / Node.ROS_RATE)
+        q_len = PersonFollower.PERSON_REID_DURATION / (1 / ROS_RATE)
         self.status_queue = deque([True], maxlen=int(q_len))
         # This variable is to monitor if the target is recognized in that loop
         self.recognized = False
 
-        # Initialization host building
+        # self.max_distance = 0
+
         self.initialized = False
+
         rospy.Service('pf_initialize', PFInitializer, self.initialized_cb)
 
         self.robot_handler_publisher = rospy.Publisher(
@@ -228,11 +231,9 @@ class PersonFollower(Node):
                     # cv.imshow('matched_back', matched_back)
                     # cv.imshow('front_img', self.front_img)
 
-                    # Append the status queue
                     self.status_queue.append(True)
                     self.recognized = True
 
-                    # Confirmation with status queue if the state was LOST
                     if PersonFollower.STATE == 'LOST':
                         if not all(self.status_queue):
                             continue
@@ -253,7 +254,11 @@ class PersonFollower(Node):
                     if rospy.get_rostime() - lost_timeout >= rospy.Duration(0):
                         PersonFollower.STATE = 'LOST'
                     else:
-                        # Follow the last exist box's centroid
+                        # if len(self.distance_and_boxes) > 0:
+                        #     # Use the box closest to the last existence of the target
+                        #     self.tmp_box = self.distance_and_boxes[min(self.distance_and_boxes.keys())]
+                        #     msg.follow_point = self.tmp_box.centroid
+                        #     # Draw box and update waypoint_color
                         self.tmp_box = self.last_box
                         msg.follow_point = self.tmp_box.centroid
                         self.__draw_box_and_centroid(srcframe, self.tmp_box, (32, 255, 255), 5, 5)
