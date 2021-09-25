@@ -42,6 +42,8 @@ from core.Nodes import Node
 
 
 class PersonFollower(Node):
+    # TODO: Add a CONFIRM state for the states queue
+    # Unconfirmed TODO: Separate the showing fragment to another node like ShowFaceResult
     H = 480
     W = 640
     CENTROID = (W // 2, H // 2)
