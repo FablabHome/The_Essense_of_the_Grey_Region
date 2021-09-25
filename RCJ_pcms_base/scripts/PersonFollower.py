@@ -291,10 +291,11 @@ class PersonFollower(Node):
             # drown_image = node.bridge.cv2_to_compressed_imgmsg(rgb_image)
             # node.image_publisher.publish(drown_image)
 
+            rospy.set_param('~state', PersonFollower.STATE)
+
             frame = srcframe.copy()
             cv.imshow('frame', frame)
             key = cv.waitKey(1)
-            rospy.set_param('~state', PersonFollower.STATE)
             if key in [ord('q'), 27]:
                 break
 
