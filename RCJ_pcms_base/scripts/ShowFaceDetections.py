@@ -18,6 +18,7 @@ class ShowFaceDetections(Node):
     FEMALE_COLOR = (32, 10, 255)
 
     def __init__(self):
+        super(ShowFaceDetections, self).__init__('show_mask_detection')
         self.mask_sub = message_filters.Subscriber(
             '/FMD/mask_is_on',
             ObjectBoxes,
@@ -86,5 +87,4 @@ class ShowFaceDetections(Node):
 
 
 if __name__ == '__main__':
-    rospy.init_node('show_mask_detection')
     node = ShowFaceDetections()

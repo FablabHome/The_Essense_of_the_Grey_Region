@@ -23,9 +23,12 @@ sess = tf.compat.v1.Session(config=cfgs)
 
 
 class PoseRecognition(Node):
-    def __init__(self, pose_recognizer):
-        rospy.init_node('pose_recognition')
-        self.pose_recognizer = pose_recognizer
+    def __init__(self):
+        super(PoseRecognition, self).__init__('pose_recognition')
+        base = RosPack().get_path('rcj_pcms_base') + '/..'
+        pose_recognizer_path = path.join(base, 'models/PoseDetection/model_6.h5')
+        self.pose_recognizer = load_model(pose_recognizer_path)
+
         self.bridge = CvBridge()
 
         self.stat_pub = rospy.Publisher(
@@ -124,8 +127,4 @@ class PoseRecognition(Node):
 
 
 if __name__ == '__main__':
-    base = RosPack().get_path('rcj_pcms_base') + '/..'
-    pose_recognizer_path = path.join(base, 'models/PoseDetection/model_6.h5')
-    pose_recognizer = load_model(pose_recognizer_path)
-
-    node = PoseRecognition(pose_recognizer)
+    node = PoseRecognition()

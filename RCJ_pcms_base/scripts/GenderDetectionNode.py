@@ -34,8 +34,11 @@ from core.Nodes import Node
 
 
 class GenderDetectionNode(Node):
-    def __init__(self, age_gender: cv.dnn_Net):
-        self.ag_recognizer = age_gender
+    def __init__(self):
+        super(GenderDetectionNode, self).__init__('GAD')
+        bin_path = rospy.get_param('~bin_path')
+        xml_path = rospy.get_param('~xml_path')
+        self.ag_recognizer = cv.dnn.readNet(bin_path, xml_path)
 
         self.result_pub = rospy.Publisher(
             '~details',
@@ -100,8 +103,4 @@ class GenderDetectionNode(Node):
 
 
 if __name__ == '__main__':
-    rospy.init_node('GAD')
-    bin_path = rospy.get_param('~bin_path')
-    xml_path = rospy.get_param('~xml_path')
-    gender_age = cv.dnn.readNet(bin_path, xml_path)
-    node = GenderDetectionNode(gender_age)
+    node = GenderDetectionNode()

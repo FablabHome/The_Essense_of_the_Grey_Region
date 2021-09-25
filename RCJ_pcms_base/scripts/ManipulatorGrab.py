@@ -33,7 +33,7 @@ class ManipulatorGrab(Node):
     H = 480
 
     def __init__(self):
-        rospy.init_node('manipulator_grab')
+        super(ManipulatorGrab, self).__init__('manipulator_grab')
 
         rospy.wait_for_service(ManipulatorGrab.MANI_SRV_NAME)
         self.service = rospy.ServiceProxy(ManipulatorGrab.MANI_SRV_NAME, SetKinematicsPose)

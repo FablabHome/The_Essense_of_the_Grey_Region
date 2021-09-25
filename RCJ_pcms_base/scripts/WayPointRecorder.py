@@ -28,6 +28,8 @@ class WayPointRecorder(Node):
     CAMERA_ANGLE = 17
 
     def __init__(self):
+        super(WayPointRecorder, self).__init__('waypoint_recorder')
+
         self.waypoints: List[List] = []
         self.current_pose = self.last_pose = [0., 0., 0., 0.]
         self.update_duration = rospy.get_rostime() + rospy.Duration(WayPointRecorder.UPDATE_DURATION)
@@ -193,5 +195,4 @@ class WayPointRecorder(Node):
 
 
 if __name__ == '__main__':
-    rospy.init_node('waypoint_recorder')
     node = WayPointRecorder()

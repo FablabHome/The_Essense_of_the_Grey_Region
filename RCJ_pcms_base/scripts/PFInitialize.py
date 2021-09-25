@@ -30,7 +30,7 @@ import cv2 as cv
 import rospy
 from cv_bridge import CvBridge
 from home_robot_msgs.msg import ObjectBoxes, ObjectBox
-from home_robot_msgs.srv import PFInitializer, PFInitializerRequest
+from home_robot_msgs.srv import PFInitializerRequest
 from mr_voice.srv import SpeakerSrv
 from rospkg import RosPack
 from sensor_msgs.msg import CompressedImage
@@ -47,9 +47,18 @@ class PFInitialize(Node):
     INIT_TIMEOUT = 1.8
     INIT_BOX_SIZE = 0.7
 
-    def __init__(self, person_desc_extractor):
+    def __init__(self):
+        super(PFInitialize, self).__init__('pf_initializer')
+
+        base = RosPack().get_path('rcj_pcms_base') + '/..'
+        bin_path = path.join(
+            base, 'models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.bin')
+        xml_path = path.join(
+            base, 'models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.xml')
+        net = cv.dnn.readNet(bin_path, xml_path)
+        self.person_desc_extractor = PersonReidentification(net)
+
         self.rgb_image = None
-        self.person_desc_extractor = person_desc_extractor
         rospy.wait_for_service('pf_initialize')
         self.speaker_pub = rospy.Publisher(
             '/speaker/text',
@@ -155,7 +164,7 @@ class PFInitialize(Node):
         self.speaker_srv('Please let me see your back in 3 seconds')
         front_image = inside_init_box[0].source_img
         serialized_front_img = self.bridge.cv2_to_compressed_imgmsg(front_image)
-        front_descriptor = person_descriptor_extractor.parse_descriptor(front_image)
+        front_descriptor = self.person_desc_extractor.parse_descriptor(front_image)
         front_descriptor = front_descriptor[0].tolist()
 
         timeout = rospy.get_rostime() + init_timeout
@@ -183,7 +192,7 @@ class PFInitialize(Node):
 
         back_image = inside_init_box[0].source_img
         serialized_back_img = self.bridge.cv2_to_compressed_imgmsg(back_image)
-        back_descriptor = person_descriptor_extractor.parse_descriptor(back_image)
+        back_descriptor = self.person_desc_extractor.parse_descriptor(back_image)
         back_descriptor = back_descriptor[0].tolist()
 
         request_srv = PFInitializerRequest()
@@ -198,16 +207,7 @@ class PFInitialize(Node):
 
 
 if __name__ == '__main__':
-    rospy.init_node('pf_initializer')
-
-    base = RosPack().get_path('rcj_pcms_base') + '/..'
-    bin_path = path.join(
-        base, 'models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.bin')
-    xml_path = path.join(
-        base, 'models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.xml')
-    net = cv.dnn.readNet(bin_path, xml_path)
-    person_descriptor_extractor = PersonReidentification(net)
-    node = PFInitialize(person_descriptor_extractor)
+    node = PFInitialize()
 
     # node.speaker_srv("Hi, I'm a follower, please let me see your front and wait for 3 seconds")
     #

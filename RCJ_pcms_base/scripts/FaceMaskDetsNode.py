@@ -42,8 +42,10 @@ sess = tf.compat.v1.Session(config=cfgs)
 
 
 class FaceMaskDetsNode(Node):
-    def __init__(self, mask_detector: tf.keras.Model):
-        self.mask_detector = mask_detector
+    def __init__(self):
+        super(FaceMaskDetsNode, self).__init__('FMD')
+        model_path = rospy.get_param('~model_path')
+        self.mask_detector = tf.keras.models.load_model(model_path)
         self.mask_status_pub = rospy.Publisher(
             '~mask_is_on',
             ObjectBoxes,
@@ -91,7 +93,4 @@ class FaceMaskDetsNode(Node):
 
 
 if __name__ == '__main__':
-    rospy.init_node('FMD')
-    model_path = rospy.get_param('~model_path')
-    mask_detector = tf.keras.models.load_model(model_path)
-    node = FaceMaskDetsNode(mask_detector)
+    node = FaceMaskDetsNode()

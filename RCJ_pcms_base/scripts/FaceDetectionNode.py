@@ -34,8 +34,11 @@ from core.Nodes import Node
 
 
 class FaceDetectionNode(Node):
-    def __init__(self, face_detector: cv.dnn_Net):
-        self.face_detector = face_detector
+    def __init__(self):
+        super(FaceDetectionNode, self).__init__('FD')
+        bin_path = rospy.get_param('~bin_path')
+        xml_path = rospy.get_param('~xml_path')
+        self.face_detector = cv.dnn.readNet(bin_path, xml_path)
 
         self.face_pub = rospy.Publisher(
             '~faces',
@@ -112,8 +115,4 @@ class FaceDetectionNode(Node):
 
 
 if __name__ == '__main__':
-    rospy.init_node('FD')
-    bin_path = rospy.get_param('~bin_path')
-    xml_path = rospy.get_param('~xml_path')
-    face_detector = cv.dnn.readNet(bin_path, xml_path)
-    node = FaceDetectionNode(face_detector)
+    node = FaceDetectionNode()

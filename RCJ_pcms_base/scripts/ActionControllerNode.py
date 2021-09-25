@@ -35,7 +35,8 @@ from core.Nodes import Node
 
 class ActionControllerNode(Node):
     def __init__(self):
-        self.acp_program = ActionController(node_id=self.name, config_file='./config/wrs_demo_2.json')
+        super(ActionControllerNode, self).__init__('acp', anonymous=False)
+        self.acp_program = ActionController(node_id='acp', config_file='./config/wrs_demo_2.json')
 
         # Create result publisher
         self.processed_result_publisher = rospy.Publisher(
@@ -103,6 +104,5 @@ class ActionControllerNode(Node):
 
 
 if __name__ == '__main__':
-    rospy.init_node('acp')
     ac_node = ActionControllerNode()
     ac_node.spin()
