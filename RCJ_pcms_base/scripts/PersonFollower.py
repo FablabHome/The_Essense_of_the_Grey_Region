@@ -253,11 +253,6 @@ class PersonFollower(Node):
                     if rospy.get_rostime() - lost_timeout >= rospy.Duration(0):
                         PersonFollower.STATE = 'LOST'
                     else:
-                        # if len(self.distance_and_boxes) > 0:
-                        #     # Use the box closest to the last existence of the target
-                        #     self.tmp_box = self.distance_and_boxes[min(self.distance_and_boxes.keys())]
-                        #     msg.follow_point = self.tmp_box.centroid
-                        #     # Draw box and update waypoint_color
                         # Follow the last exist box's centroid
                         self.tmp_box = self.last_box
                         msg.follow_point = self.tmp_box.centroid
