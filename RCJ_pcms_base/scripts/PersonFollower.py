@@ -39,7 +39,6 @@ from sensor_msgs.msg import CompressedImage
 from core.Detection import PersonReidentification
 from core.Dtypes import BBox
 from core.Nodes import Node
-from core.utils.config import ROS_RATE
 
 
 class PersonFollower(Node):
@@ -82,7 +81,7 @@ class PersonFollower(Node):
         self.waypoints = []
 
         # Record the statuses for re-identification
-        q_len = PersonFollower.PERSON_REID_DURATION / (1 / ROS_RATE)
+        q_len = PersonFollower.PERSON_REID_DURATION / (1 / Node.ROS_RATE)
         self.status_queue = deque([True], maxlen=int(q_len))
         # This variable is to monitor if the target is recognized in that loop
         self.recognized = False
