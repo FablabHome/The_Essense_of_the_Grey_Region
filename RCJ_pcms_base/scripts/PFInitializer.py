@@ -119,6 +119,8 @@ if __name__ == '__main__':
     net = cv.dnn.readNet(bin_path, xml_path)
     person_descriptor_extractor = PersonReidentification(net)
 
+    node.speaker_srv("Hi, I'm a follower, please let me see your front and wait for 3 seconds")
+
     init_timeout = rospy.Duration(node.INIT_TIMEOUT)
     timeout = rospy.get_rostime() + init_timeout
 
@@ -198,4 +200,4 @@ if __name__ == '__main__':
 
     response = node.call_person_follower(request_srv)
     rospy.set_param('~initialized', True)
-    node.speaker_srv('I\'ve remembered you, you can start walking')
+    node.speaker_srv("I've remembered you, you can start walking")
