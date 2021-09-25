@@ -129,7 +129,7 @@ if __name__ == "__main__":
     boxes = ObjectBoxes()
 
     node = YOLODetectionNode()
-    rate = rospy.Rate(30)
+    rate = rospy.Rate(35)
 
     pub = rospy.Publisher(
         '~boxes',
@@ -184,7 +184,11 @@ if __name__ == "__main__":
 
             try:
                 cv.imshow('YD', drown_image)
-                cv.waitKey(1)
+                key = cv.waitKey(1) & 0xFF
+                if key in [27, ord('q')]:
+                    break
             except Exception:
                 rospy.loginfo(drown_image.shape)
             rate.sleep()
+
+    cv.destroyAllWindows()
