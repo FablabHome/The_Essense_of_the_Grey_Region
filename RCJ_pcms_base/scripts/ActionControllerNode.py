@@ -167,7 +167,7 @@ class ActionControllerNode(Node):
 
         for require_keyword in require_keywords:
             require_keyword = self._input_text_processor(require_keyword)[0]
-            if require_keyword not in input_text:
+            if require_keyword == input_text:
                 return False
         else:
             return True
@@ -179,7 +179,7 @@ class ActionControllerNode(Node):
 
         for separately_keyword in separately_keywords:
             separately_keyword = self._input_text_processor(separately_keyword)[0]
-            if separately_keyword in input_text:
+            if separately_keyword == input_text:
                 return True
         else:
             return False
