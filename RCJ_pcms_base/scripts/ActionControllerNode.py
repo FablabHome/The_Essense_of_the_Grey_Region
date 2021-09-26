@@ -33,6 +33,58 @@ from mr_voice.msg import Voice
 from std_msgs.msg import String
 
 from core.Nodes import Node
+from core.tools import Speaker
+
+
+class NormalKeywordParser:
+    def __init__(self, configs: dict):
+        self.configs = configs
+
+    def parse(self, text):
+        for meaning, configs in self.configs.items():
+            require_keywords = configs['and']
+            separately_keywords = configs['or']
+            rospy.loginfo(f'{require_keywords}, {separately_keywords}')
+
+            require_keywords_status = self._has_require_keywords(text, require_keywords)
+            separately_keywords_status = self._has_separately_keywords(text, separately_keywords)
+
+            if require_keywords_status and separately_keywords_status:
+                response = configs['response']
+                actions = configs['action']
+                rospy.loginfo(f'Text \'{text}\' matched, Meaning: {meaning}, response: {response}')
+                return meaning, response, actions
+        else:
+            rospy.logerr(f'Text \'{text}\' doesn\'t match anybody in the config file')
+            return '', '', []
+
+    @staticmethod
+    def _input_text_processor(text):
+        return text.strip().lower().split()
+
+    def _has_require_keywords(self, text, require_keywords):
+        input_text = self._input_text_processor(text)
+        if len(require_keywords) == 0:
+            return True
+
+        for require_keyword in require_keywords:
+            require_keyword = self._input_text_processor(require_keyword)[0]
+            if require_keyword not in input_text:
+                return False
+        else:
+            return True
+
+    def _has_separately_keywords(self, text, separately_keywords):
+        input_text = self._input_text_processor(text)
+        if len(separately_keywords) == 0:
+            return True
+
+        for separately_keyword in separately_keywords:
+            separately_keyword = self._input_text_processor(separately_keyword)[0]
+            if separately_keyword in input_text:
+                return True
+        else:
+            return False
 
 
 class ActionControllerNode(Node):
@@ -44,6 +96,8 @@ class ActionControllerNode(Node):
         config = rospy.get_param('~config')
         self.configs = json.load(open(config))
         self.action_commands = rospy.get_param('~action_commands')
+
+        self.keyword_parser = NormalKeywordParser(self.configs)
         # self.acp_program = ActionController(node_id='acp', config_file=config)
 
         self.result = CommandData()
@@ -53,6 +107,8 @@ class ActionControllerNode(Node):
 
         # Status of the ActionController
         self.is_running = False
+
+        self.speaker = Speaker()
 
         # Create result publisher
         self.processed_result_publisher = rospy.Publisher(
@@ -66,12 +122,6 @@ class ActionControllerNode(Node):
             '/home_edu/facial',
             String,
             queue_size=0
-        )
-
-        self.speaker_pub = rospy.Publisher(
-            '/speaker/say',
-            String,
-            queue_size=1
         )
 
         # Create Subscriber to subscribe for the text
@@ -98,56 +148,12 @@ class ActionControllerNode(Node):
                 caller = voice_data._connection_header['callerid']
                 rospy.loginfo(f'Processing request from {caller}')
 
-                # Run acp process and publish the result
-                # self.result = self.acp_program.run(text, serialize=True)
-                for meaning, configs in self.configs.items():
-                    require_keywords = configs['and']
-                    separately_keywords = configs['or']
-                    rospy.loginfo(f'{require_keywords}, {separately_keywords}')
+                meaning, response, actions = self.keyword_parser.parse(text)
+                self.speaker.say(response, wait_until_end=False)
 
-                    require_keywords_status = self._has_require_keywords(text, require_keywords)
-                    separately_keywords_status = self._has_separately_keywords(text, separately_keywords)
-
-                    if require_keywords_status and separately_keywords_status:
-                        # Get response and action
-                        response = configs['response']
-                        actions = configs['action']
-                        meaning = meaning
-
-                        self.speaker_pub.publish(String(response))
-
-                        rospy.loginfo(f'Text \'{text}\' matched, Meaning: {meaning}, response: {response}')
-
-                        if len(actions) != 0:
-                            for action in actions:
-                                # Get the command and args
-                                command, *args = action
-                                path_command = path.join(self.action_commands, command) + '.py'
-
-                                full_command = [path_command]
-                                full_command.extend(args)
-
-                                rospy.loginfo(f'Running action <{" ".join(action)}>')
-                                command_status = subprocess.run(full_command, stdout=subprocess.PIPE,
-                                                                stderr=subprocess.PIPE)
-
-                                # Decode the stdout
-                                stdout = command_status.stdout.decode('ascii')
-                                # Check the returncode
-                                if command_status.returncode == 0:
-                                    # Return code 0 means program executed successfully
-                                    rospy.loginfo(f'Action <{" ".join(action)}> has run successfully')
-                                    if stdout != '':
-                                        rospy.loginfo(f'stdout: {stdout}')
-                                else:
-                                    # If status code is not 0, which means action stopped unexpectedly
-                                    # Log the error
-                                    rospy.logerr(
-                                        f'Action <{" ".join(action)}> failed with exit code {command_status.returncode}')
-                        break
-                else:
-                    rospy.logerr(f'Text \'{text}\' doesn\'t match anybody in the config file')
-                    response = meaning = ''
+                if len(actions) != 0:
+                    for action in actions:
+                        self.__run_action(action)
 
                 self.result.meaning = meaning
                 self.result.response = response
@@ -156,33 +162,33 @@ class ActionControllerNode(Node):
                 self.processed_result_publisher.publish(self.result)
             self.is_running = False
 
-    @staticmethod
-    def _input_text_processor(text):
-        return text.strip().lower().split()
+    def __run_action(self, action):
+        # Get the command and args
+        command, *args = action
+        path_command = path.join(self.action_commands, command) + '.py'
 
-    def _has_require_keywords(self, text, require_keywords):
-        input_text = self._input_text_processor(text)
-        if len(require_keywords) == 0:
-            return True
+        full_command = [path_command]
+        full_command.extend(args)
 
-        for require_keyword in require_keywords:
-            require_keyword = self._input_text_processor(require_keyword)[0]
-            if require_keyword == input_text:
-                return False
+        rospy.loginfo(f'Running action <{" ".join(action)}>')
+        command_status = subprocess.run(full_command, stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
+
+        # Decode the stdout
+        stdout = command_status.stdout.decode('ascii')
+        # Check the returncode
+        if command_status.returncode == 0:
+            # Return code 0 means program executed successfully
+            rospy.loginfo(f'Action <{" ".join(action)}> has run successfully')
+            if stdout != '':
+                rospy.loginfo(f'stdout: {stdout}')
         else:
-            return True
+            # If status code is not 0, which means action stopped unexpectedly
+            # Log the error
+            rospy.logerr(
+                f'Action <{" ".join(action)}> failed with exit code {command_status.returncode}')
 
-    def _has_separately_keywords(self, text, separately_keywords):
-        input_text = self._input_text_processor(text)
-        if len(separately_keywords) == 0:
-            return True
-
-        for separately_keyword in separately_keywords:
-            separately_keyword = self._input_text_processor(separately_keyword)[0]
-            if separately_keyword == input_text:
-                return True
-        else:
-            return False
+        return command_status.returncode
 
     def main(self):
         pass
