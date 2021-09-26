@@ -1,19 +1,28 @@
 <launch>
-    <arg name="image_source" default="/image_raw/compressed"/>
+    <arg name="bin_path"
+         default="$(find rcj_pcms_base)../models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.bin"/>
+    <arg name="xml_path"
+         default="$(find rcj_pcms_base)../models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.xml"/>
     <node
         name="pf_initializer"
         pkg="rcj_pcms_base"
         type="PFInitialize.py"
         required="false"
         output="screen"
-    />
+    >
+        <param name="bin_path" type="str" value="$(arg bin_path)"/>
+        <param name="xml_path" type="str" value="$(arg xml_path)"/>
+    </node>
     <node
         name="person_follower"
         pkg="rcj_pcms_base"
         type="PersonFollower.py"
         required="true"
         output="screen"
-    />
+    >
+        <param name="bin_path" type="str" value="$(arg bin_path)"/>
+        <param name="xml_path" type="str" value="$(arg xml_path)"/>
+    </node>
     <node
         name="waypoint_recorder"
         pkg="rcj_pcms_base"

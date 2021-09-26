@@ -24,15 +24,12 @@ SOFTWARE.
 
 """
 
-from os import path
-
 import cv2 as cv
 import rospy
 from cv_bridge import CvBridge
 from home_robot_msgs.msg import ObjectBoxes, ObjectBox
 from home_robot_msgs.srv import PFInitializer, PFInitializerRequest
 from mr_voice.srv import SpeakerSrv
-from rospkg import RosPack
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import String
 
@@ -50,16 +47,15 @@ class PFInitialize(Node):
     def __init__(self):
         super(PFInitialize, self).__init__('pf_initializer')
 
-        base = RosPack().get_path('rcj_pcms_base') + '/..'
-        bin_path = path.join(
-            base, 'models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.bin')
-        xml_path = path.join(
-            base, 'models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.xml')
+        bin_path = rospy.get_param('~bin_path')
+        xml_path = rospy.get_param('~xml_path')
         net = cv.dnn.readNet(bin_path, xml_path)
         self.person_desc_extractor = PersonReidentification(net)
 
         self.rgb_image = None
+
         rospy.wait_for_service('pf_initialize')
+
         self.speaker_pub = rospy.Publisher(
             '/speaker/text',
             String,
