@@ -25,7 +25,7 @@ SOFTWARE.
 """
 
 from collections import deque
-from os import path
+from copy import copy
 
 import cv2 as cv
 import numpy as np
@@ -33,7 +33,6 @@ import rospy
 from cv_bridge import CvBridge
 from home_robot_msgs.msg import ObjectBoxes, PFRobotData, PFWaypoints, ObjectBox
 from home_robot_msgs.srv import PFInitializer, PFInitializerRequest, PFInitializerResponse
-from rospkg import RosPack
 from sensor_msgs.msg import CompressedImage
 
 from core.Detection import PersonReidentification
@@ -61,12 +60,11 @@ class PersonFollower(Node):
     PERSON_REID_DURATION = 1
 
     def __init__(self):
-        super(PersonFollower, self).__init__('person_follower')
-        base = RosPack().get_path('rcj_pcms_base') + '/..'
-        bin_path = path.join(
-            base, 'models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.bin')
-        xml_path = path.join(
-            base, 'models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.xml')
+        super(PersonFollower, self).__init__('person_follower', anonymous=False)
+
+        bin_path = rospy.get_param('~bin_path')
+        xml_path = rospy.get_param('~xml_path')
+
         net = cv.dnn.readNet(bin_path, xml_path)
         self.person_desc_extractor = PersonReidentification(net)
 
@@ -235,12 +233,12 @@ class PersonFollower(Node):
 
                     # Confirmation with status queue if the state was LOST
                     if PersonFollower.STATE == 'LOST':
-                        PersonFollower.STATE = 'CONFIRMING'
                         if not all(self.status_queue):
+                            self.__draw_box_and_centroid(srcframe, person_box, (255, 255, 0), 5, 5)
                             continue
                         PersonFollower.STATE = 'NORMAL'
 
-                    self.target_box = person_box
+                    self.target_box = copy(person_box)
                     self.__draw_box_and_centroid(srcframe, self.target_box, (32, 255, 0), 9, 9)
 
             msg = PFRobotData()
@@ -301,8 +299,9 @@ class PersonFollower(Node):
             if key in [ord('q'), 27]:
                 break
 
+            self.rate.sleep()
+
         cv.destroyAllWindows()
-        self.rate.sleep()
 
     def reset(self):
         pass
