@@ -1,0 +1,16 @@
+<launch>
+    <arg name="shape_dat"
+         default="$(find rcj_pcms_base)../models/face_recognition/shape_predictor_68_face_landmarks.dat"/>
+    <arg name="desc_parser"
+         default="$(find rcj_pcms_base)../models/face_recognition/dlib_face_recognition_resnet_model_v1.dat"/>
+    <node
+            name="face_desc_parser"
+            pkg="rcj_pcms_base"
+            type="FaceDescParserNode.py"
+            required="true"
+            output="screen"
+    >
+        <param name="shape_dat" type="str" value="$(arg shape_dat)"/>
+        <param name="desc_parser" type="str" value="$(arg desc_parser)"/>
+    </node>
+</launch>
