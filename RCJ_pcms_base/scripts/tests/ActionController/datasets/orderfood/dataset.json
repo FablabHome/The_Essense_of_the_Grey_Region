@@ -1,0 +1,345 @@
+{
+  "entities": {
+    "food": {
+      "automatically_extensible": false,
+      "data": [
+        {
+          "synonyms": [],
+          "value": "French Fries"
+        },
+        {
+          "synonyms": [],
+          "value": "meat salad"
+        },
+        {
+          "synonyms": [],
+          "value": "spaghetti"
+        }
+      ],
+      "matching_strictness": 1.0,
+      "use_synonyms": true
+    },
+    "takeout": {
+      "automatically_extensible": false,
+      "data": [
+        {
+          "synonyms": [
+            "takeout"
+          ],
+          "value": "take out"
+        },
+        {
+          "synonyms": [],
+          "value": "to go"
+        },
+        {
+          "synonyms": [],
+          "value": "doggy bag"
+        }
+      ],
+      "matching_strictness": 1.0,
+      "use_synonyms": true
+    }
+  },
+  "intents": {
+    "OrderFood": {
+      "utterances": [
+        {
+          "data": [
+            {
+              "text": "We would like to order some "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "French Fries"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Get me a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "spaghetti"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Give her a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salad"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "We will have the "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "French Fries"
+            },
+            {
+              "text": ", please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Can I have a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salad"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "I want a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "spgahetti"
+            },
+            {
+              "text": ", please"
+            }
+          ]
+        }
+      ]
+    },
+    "OrderFoodTakeOut": {
+      "utterances": [
+        {
+          "data": [
+            {
+              "text": "We would like to order some "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "French Fries"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "to go"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Get me a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "spaghetti"
+            },
+            {
+              "text": " in a "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "doggy bag"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Give her a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salad"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "take out"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "We will have the "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "French Fries"
+            },
+            {
+              "text": ", "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "take out"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Can I have a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salad"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "to go"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "I want a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "spgahetti"
+            },
+            {
+              "text": " in my "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "doggy bag"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        }
+      ]
+    },
+    "PayTheBill": {
+      "utterances": [
+        {
+          "data": [
+            {
+              "text": "Check, please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Can I get the bill, please?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Can I foot the bill?"
+            }
+          ]
+        }
+      ]
+    },
+    "RemoveOrder": {
+      "utterances": [
+        {
+          "data": [
+            {
+              "text": "Could you cancel our "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salad"
+            },
+            {
+              "text": " please?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Excuse me, can I cancel the "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "spaghetti"
+            },
+            {
+              "text": " please?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Please cancel that "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "French Fries"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "language": "en"
+}

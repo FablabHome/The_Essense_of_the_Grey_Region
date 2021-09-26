@@ -1,0 +1,72 @@
+# OrderFood intent
+---
+type: intent
+name: OrderFood
+slots:
+  - name: food
+    entity: food
+utterances:
+  - We would like to order some [food:food](French Fries) please
+  - Get me a [food:food](spaghetti)
+  - Give her a [food:food](meat salad)
+  - We will have the [food:food](French Fries), please
+  - Can I have a [food:food](meat salad) please
+  - I want a [food:food](spgahetti), please
+
+# OrderFoodTakeOut intent
+---
+type: intent
+name: OrderFoodTakeOut
+slots:
+  - name: food
+    entity: food
+  - name: takeout
+    entity: takeout
+utterances:
+  - We would like to order some [food:food](French Fries) [takeout:takeout](to go) please
+  - Get me a [food:food](spaghetti) in a [takeout:takeout](doggy bag) please
+  - Give her a [food:food](meat salad) [takeout:takeout](take out) please
+  - We will have the [food:food](French Fries), [takeout:takeout](take out)
+  - Can I have a [food:food](meat salad) [takeout:takeout](to go) please
+  - I want a [food:food](spgahetti) in my [takeout:takeout](doggy bag) please
+
+# RemoveOrder intent
+---
+type: intent
+name: RemoveOrder
+slots:
+  - name: food
+    entity: food
+utterances:
+  - Could you cancel our [food:food](meat salad) please?
+  - Excuse me, can I cancel the [food:food](spaghetti) please?
+  - Please cancel that [food:food](French Fries)
+
+# PayTheBill intent
+---
+type: intent
+name: PayTheBill
+utterances:
+  - Check, please
+  - Can I get the bill, please?
+  - Can I foot the bill?
+
+# food entity
+---
+type: entity
+name: food
+automatically_extensible: no
+values:
+- French Fries
+- meat salad
+- spaghetti
+
+# takeout entity
+---
+type: entity
+name: takeout
+automatically_extensible: no
+values:
+- [take out, takeout]
+- to go
+- doggy bag
