@@ -1,0 +1,14 @@
+<launch>
+    <arg name="config" default="$(find rcj_pcms_base)/config/2021_keywords_live.json"/>
+    <arg name="action_commands" default="$(find rcj_pcms_base)/scripts/action_commands"/>
+    <node
+        name="acp"
+        pkg="rcj_pcms_base"
+        type="ActionControllerNode.py"
+        required="true"
+        output="screen"
+    >
+        <param name="config" type="str" value="$(arg config)"/>
+        <param name="action_commands" type="str" value="$(arg action_commands)"/>
+    </node>
+</launch>
