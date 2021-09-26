@@ -23,20 +23,36 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 """
+import json
+import subprocess
+from os import path
 
 import rospy
 from home_robot_msgs.msg import CommandData
 from mr_voice.msg import Voice
 from std_msgs.msg import String
 
-from core.Nodes.ActionController import ActionController
 from core.Nodes import Node
 
 
 class ActionControllerNode(Node):
+    # TODO: Separate the parser part into another object,
+    #       as snips will be joining the party
     def __init__(self):
         super(ActionControllerNode, self).__init__('acp', anonymous=False)
-        self.acp_program = ActionController(node_id='acp', config_file='./config/wrs_demo_2.json')
+
+        config = rospy.get_param('~config')
+        self.configs = json.load(open(config))
+        self.action_commands = rospy.get_param('~action_commands')
+        # self.acp_program = ActionController(node_id='acp', config_file=config)
+
+        self.result = CommandData()
+
+        # Buffer of requests, as queue
+        self.buffer = []
+
+        # Status of the ActionController
+        self.is_running = False
 
         # Create result publisher
         self.processed_result_publisher = rospy.Publisher(
@@ -66,13 +82,6 @@ class ActionControllerNode(Node):
             queue_size=1
         )
 
-        self.result = CommandData()
-
-        # Buffer of requests, as queue
-        self.buffer = []
-
-        # Status of the ActionController
-        self.is_running = False
         rospy.set_param('~is_running', self.is_running)
 
     def _callback(self, voice_data: Voice):
@@ -90,11 +99,90 @@ class ActionControllerNode(Node):
                 rospy.loginfo(f'Processing request from {caller}')
 
                 # Run acp process and publish the result
-                self.result = self.acp_program.run(text, serialize=True)
+                # self.result = self.acp_program.run(text, serialize=True)
+                for meaning, configs in self.configs.items():
+                    require_keywords = configs['and']
+                    separately_keywords = configs['or']
+                    rospy.loginfo(f'{require_keywords}, {separately_keywords}')
+
+                    require_keywords_status = self._has_require_keywords(text, require_keywords)
+                    separately_keywords_status = self._has_separately_keywords(text, separately_keywords)
+
+                    if require_keywords_status and separately_keywords_status:
+                        # Get response and action
+                        response = configs['response']
+                        actions = configs['action']
+                        meaning = meaning
+
+                        self.speaker_pub.publish(String(response))
+
+                        rospy.loginfo(f'Text \'{text}\' matched, Meaning: {meaning}, response: {response}')
+
+                        if len(actions) != 0:
+                            for action in actions:
+                                # Get the command and args
+                                command, *args = action
+                                path_command = path.join(self.action_commands, command) + '.py'
+
+                                full_command = [path_command]
+                                full_command.extend(args)
+
+                                rospy.loginfo(f'Running action <{" ".join(action)}>')
+                                command_status = subprocess.run(full_command, stdout=subprocess.PIPE,
+                                                                stderr=subprocess.PIPE)
+
+                                # Decode the stdout
+                                stdout = command_status.stdout.decode('ascii')
+                                # Check the returncode
+                                if command_status.returncode == 0:
+                                    # Return code 0 means program executed successfully
+                                    rospy.loginfo(f'Action <{" ".join(action)}> has run successfully')
+                                    if stdout != '':
+                                        rospy.loginfo(f'stdout: {stdout}')
+                                else:
+                                    # If status code is not 0, which means action stopped unexpectedly
+                                    # Log the error
+                                    rospy.logerr(
+                                        f'Action <{" ".join(action)}> failed with exit code {command_status.returncode}')
+                        break
+                else:
+                    rospy.logerr(f'Text \'{text}\' doesn\'t match anybody in the config file')
+                    response = meaning = ''
+
+                self.result.meaning = meaning
+                self.result.response = response
                 if not self.result.response != '':
                     self.facial_pub.publish(f"crying:Current text <{text}> doesn't match anybody in config")
                 self.processed_result_publisher.publish(self.result)
             self.is_running = False
+
+    @staticmethod
+    def _input_text_processor(text):
+        return text.strip().lower().split()
+
+    def _has_require_keywords(self, text, require_keywords):
+        input_text = self._input_text_processor(text)
+        if len(require_keywords) == 0:
+            return True
+
+        for require_keyword in require_keywords:
+            require_keyword = self._input_text_processor(require_keyword)[0]
+            if require_keyword not in input_text:
+                return False
+        else:
+            return True
+
+    def _has_separately_keywords(self, text, separately_keywords):
+        input_text = self._input_text_processor(text)
+        if len(separately_keywords) == 0:
+            return True
+
+        for separately_keyword in separately_keywords:
+            separately_keyword = self._input_text_processor(separately_keyword)[0]
+            if separately_keyword in input_text:
+                return True
+        else:
+            return False
 
     def main(self):
         pass
