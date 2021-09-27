@@ -149,7 +149,7 @@ class ActionControllerNode(Node):
                 rospy.loginfo(f'Processing request from {caller}')
 
                 meaning, response, actions = self.keyword_parser.parse(text)
-                self.speaker.say(response, wait_until_end=False)
+                self.speaker.say(response)
 
                 if len(actions) != 0:
                     for action in actions:
