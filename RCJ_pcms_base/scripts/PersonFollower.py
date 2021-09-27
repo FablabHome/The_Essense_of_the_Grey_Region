@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 """
-
+import random
 from collections import deque
 from copy import copy
 
@@ -32,8 +32,10 @@ import numpy as np
 import rospy
 from cv_bridge import CvBridge
 from home_robot_msgs.msg import ObjectBoxes, PFRobotData, PFWaypoints, ObjectBox
-from home_robot_msgs.srv import PFInitializer, PFInitializerRequest, PFInitializerResponse
+from home_robot_msgs.srv import PFInitializer, PFInitializerRequest, PFInitializerResponse, ResetPF, ResetPFResponse, \
+    ResetPFRequest
 from sensor_msgs.msg import CompressedImage
+from std_srvs.srv import Trigger
 
 from core.Detection import PersonReidentification
 from core.Dtypes import BBox
@@ -46,7 +48,7 @@ class PersonFollower(Node):
     W = 640
     CENTROID = (W // 2, H // 2)
 
-    SIMIL_ERROR = 0.53
+    SIMIL_ERROR = 0.55
     STATE = 'NORMAL'  # SEARCHING, LOST
 
     # Timeouts
@@ -88,6 +90,13 @@ class PersonFollower(Node):
         # Initialization host building
         self.initialized = False
         rospy.Service('pf_initialize', PFInitializer, self.initialized_cb)
+
+        # The reset service server
+        rospy.Service('pf_reset', ResetPF, self.on_reset)
+        self.__question_answered = False  # Just for playing
+
+        # Proxy of PFInitialize reset service
+        self.reset_initializer = rospy.ServiceProxy('pf_init_reset', Trigger)
 
         self.robot_handler_publisher = rospy.Publisher(
             '/PFRHandler/pf_data',
@@ -138,6 +147,21 @@ class PersonFollower(Node):
         self.initialized = True
         return PFInitializerResponse(True)
 
+    def on_reset(self, req: ResetPFRequest):
+        # Just for playing
+        rospy.set_param("~todays_question", "V2hvJ3MgdGhlIGFic29sdXRlIGdvZCBvZiBoeXBlcmRlYXRoPw==")
+        answer = 'QXNyaWVsIERyZWVtdXJy'
+
+        user_answer = req.answer
+
+        if user_answer == answer:
+            self.reset()
+            self.reset_initializer()
+
+            return True
+        else:
+            return False
+
     def box_callback(self, detections: ObjectBoxes):
         if self.initialized:
             self.detection_boxes = detections.boxes
@@ -184,6 +208,9 @@ class PersonFollower(Node):
         waypoint_color = (32, 255, 0)
 
         while not rospy.is_shutdown():
+            if not self.initialized:
+                continue
+
             srcframe = self.rgb_image
             if srcframe is None:
                 continue
@@ -222,7 +249,8 @@ class PersonFollower(Node):
                 back_similarity = self.__compare_descriptor(current_descriptor, self.back_descriptor)
                 # rospy.loginfo(f'{front_similarity},{back_similarity}')
 
-                if self.__similarity_lt(front_similarity) or self.__similarity_lt(back_similarity):
+                if (self.__similarity_lt(front_similarity) or self.__similarity_lt(
+                        back_similarity)) and not self.recognized:
                     # cv.imshow('matched_front', matched_front)
                     # cv.imshow('matched_back', matched_back)
                     # cv.imshow('front_img', self.front_img)
@@ -304,7 +332,10 @@ class PersonFollower(Node):
         cv.destroyAllWindows()
 
     def reset(self):
-        pass
+        self.detection_boxes = []
+        self.initialized = False
+        # self.front_descriptor = self.back_descriptor = None
+        cv.destroyAllWindows()
 
 
 if __name__ == '__main__':

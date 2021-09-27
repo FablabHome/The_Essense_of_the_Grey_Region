@@ -32,6 +32,7 @@ from home_robot_msgs.srv import PFInitializer, PFInitializerRequest
 from mr_voice.srv import SpeakerSrv
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import String
+from std_srvs.srv import SetBoolRequest, Trigger, TriggerResponse, TriggerRequest
 
 from core.Detection import PersonReidentification
 from core.Dtypes import BBox
@@ -53,8 +54,12 @@ class PFInitialize(Node):
         self.person_desc_extractor = PersonReidentification(net)
 
         self.rgb_image = None
+        self.is_running = False
 
         rospy.wait_for_service('pf_initialize')
+
+        # Reset Service
+        rospy.Service('pf_init_reset', Trigger, self.reset_callback)
 
         self.speaker_pub = rospy.Publisher(
             '/speaker/text',
@@ -87,7 +92,98 @@ class PFInitialize(Node):
         self.bridge = CvBridge()
         self.init_box = self.__generate_initial_box()
         self.inside_init_box = []
+
+        self.reset_callback(TriggerRequest())
         self.main()
+
+    def reset_callback(self, req: TriggerRequest):
+        if not self.is_running:
+            self.is_running = True
+            init_timeout = rospy.Duration(PFInitialize.INIT_TIMEOUT)
+            timeout = rospy.get_rostime() + init_timeout
+
+            info_text = ''
+            inside_init_box = []
+
+            while rospy.get_rostime() - timeout <= init_timeout:
+                inside_init_box = self.inside_init_box
+                if len(inside_init_box) != 1:
+                    timeout = rospy.get_rostime() + init_timeout
+                    if len(inside_init_box) == 0:
+                        info_text = 'Please stand inside the blue box'
+                    elif len(inside_init_box) > 1:
+                        info_text = 'Only 1 person can stand inside the blue box'
+                else:
+                    info_text = 'Please wait for a few seconds'
+
+                rgb_image = self.rgb_image
+                if rgb_image is None:
+                    continue
+
+                self.init_box.draw(rgb_image, (255, 0, 32), 3)
+                cv.putText(rgb_image, info_text, (10, PFInitialize.H - 40),
+                           cv.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
+                # drown_image = self.bridge.cv2_to_compressed_imgmsg(rgb_image)
+                # self.image_publisher.publish(drown_image)
+                cv.imshow('initializer', rgb_image)
+                cv.waitKey(1)
+
+            self.init_box_publisher.publish(ObjectBox(
+                x1=self.init_box.x1,
+                y1=self.init_box.y1,
+                x2=self.init_box.x2,
+                y2=self.init_box.y2
+            ))
+            # self.speaker_srv('Please let me see your back in 3 seconds')
+            front_image = inside_init_box[0].source_img
+            serialized_front_img = self.bridge.cv2_to_compressed_imgmsg(front_image)
+            front_descriptor = self.person_desc_extractor.parse_descriptor(front_image)
+            front_descriptor = front_descriptor[0].tolist()
+
+            timeout = rospy.get_rostime() + init_timeout
+            while rospy.get_rostime() - timeout <= init_timeout:
+                inside_init_box = self.inside_init_box
+                if len(inside_init_box) != 1:
+                    timeout = rospy.get_rostime() + init_timeout
+                    if len(inside_init_box) == 0:
+                        info_text = 'Please stand inside the blue box'
+                    elif len(inside_init_box) > 1:
+                        info_text = 'Only 1 person can stand inside the blue box'
+                else:
+                    info_text = 'Please turn back'
+
+                rgb_image = self.rgb_image
+                self.init_box.draw(rgb_image, (255, 0, 32), 3)
+
+                cv.putText(rgb_image, info_text, (10, PFInitialize.H - 40),
+                           cv.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
+                # drown_image = self.bridge.cv2_to_compressed_imgmsg(rgb_image)
+                # self.image_publisher.publish(drown_image)
+                cv.imshow('initializer', rgb_image)
+                cv.waitKey(1)
+
+            back_image = inside_init_box[0].source_img
+            serialized_back_img = self.bridge.cv2_to_compressed_imgmsg(back_image)
+            back_descriptor = self.person_desc_extractor.parse_descriptor(back_image)
+            back_descriptor = back_descriptor[0].tolist()
+
+            request_srv = PFInitializerRequest()
+            request_srv.front_img = serialized_front_img
+            request_srv.back_img = serialized_back_img
+            request_srv.front_descriptor = front_descriptor
+            request_srv.back_descriptor = back_descriptor
+
+            self.call_person_follower(request_srv)
+            rospy.set_param('~initialized', True)
+            # self.speaker_srv("I've remembered you, you can start walking")
+
+            self.is_running = False
+            cv.destroyAllWindows()
+
+            return TriggerResponse(True, 'Rested')
+        return TriggerResponse(False, 'Running')
 
     def yolo_boxes_callback(self, detections: ObjectBoxes):
         inside_init_box = []
@@ -118,88 +214,7 @@ class PFInitialize(Node):
         pass
 
     def main(self):
-        self.speaker_srv("Hi, I'm a follower, please let me see your front and wait for 3 seconds")
-
-        init_timeout = rospy.Duration(PFInitialize.INIT_TIMEOUT)
-        timeout = rospy.get_rostime() + init_timeout
-
-        info_text = ''
-        inside_init_box = []
-
-        while rospy.get_rostime() - timeout <= init_timeout:
-            inside_init_box = self.inside_init_box
-            if len(inside_init_box) != 1:
-                timeout = rospy.get_rostime() + init_timeout
-                if len(inside_init_box) == 0:
-                    info_text = 'Please stand inside the blue box'
-                elif len(inside_init_box) > 1:
-                    info_text = 'Only 1 person can stand inside the blue box'
-            else:
-                info_text = 'Please wait for a few seconds'
-
-            rgb_image = self.rgb_image
-            if rgb_image is None:
-                continue
-
-            self.init_box.draw(rgb_image, (255, 0, 32), 3)
-            cv.putText(rgb_image, info_text, (10, PFInitialize.H - 40),
-                       cv.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-
-            # drown_image = self.bridge.cv2_to_compressed_imgmsg(rgb_image)
-            # self.image_publisher.publish(drown_image)
-            cv.imshow('frame', rgb_image)
-            cv.waitKey(1)
-
-        self.init_box_publisher.publish(ObjectBox(
-            x1=self.init_box.x1,
-            y1=self.init_box.y1,
-            x2=self.init_box.x2,
-            y2=self.init_box.y2
-        ))
-        rospy.loginfo('ok')
-        self.speaker_srv('Please let me see your back in 3 seconds')
-        front_image = inside_init_box[0].source_img
-        serialized_front_img = self.bridge.cv2_to_compressed_imgmsg(front_image)
-        front_descriptor = self.person_desc_extractor.parse_descriptor(front_image)
-        front_descriptor = front_descriptor[0].tolist()
-
-        timeout = rospy.get_rostime() + init_timeout
-        while rospy.get_rostime() - timeout <= init_timeout:
-            inside_init_box = self.inside_init_box
-            if len(inside_init_box) != 1:
-                timeout = rospy.get_rostime() + init_timeout
-                if len(inside_init_box) == 0:
-                    info_text = 'Please stand inside the blue box'
-                elif len(inside_init_box) > 1:
-                    info_text = 'Only 1 person can stand inside the blue box'
-            else:
-                info_text = 'Please turn back'
-
-            rgb_image = self.rgb_image
-            self.init_box.draw(rgb_image, (255, 0, 32), 3)
-
-            cv.putText(rgb_image, info_text, (10, PFInitialize.H - 40),
-                       cv.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-
-            # drown_image = self.bridge.cv2_to_compressed_imgmsg(rgb_image)
-            # self.image_publisher.publish(drown_image)
-            cv.imshow('frame', rgb_image)
-            cv.waitKey(1)
-
-        back_image = inside_init_box[0].source_img
-        serialized_back_img = self.bridge.cv2_to_compressed_imgmsg(back_image)
-        back_descriptor = self.person_desc_extractor.parse_descriptor(back_image)
-        back_descriptor = back_descriptor[0].tolist()
-
-        request_srv = PFInitializerRequest()
-        request_srv.front_img = serialized_front_img
-        request_srv.back_img = serialized_back_img
-        request_srv.front_descriptor = front_descriptor
-        request_srv.back_descriptor = back_descriptor
-
-        self.call_person_follower(request_srv)
-        rospy.set_param('~initialized', True)
-        self.speaker_srv("I've remembered you, you can start walking")
+        rospy.spin()
 
 
 if __name__ == '__main__':
