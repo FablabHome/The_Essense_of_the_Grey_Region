@@ -1,18 +1,33 @@
 #!/usr/bin/env python3
-import json
+from core.utils.KeywordParsers import HeySnipsNLUParser
 
-from snips_nlu import SnipsNLUEngine
-from snips_nlu.default_configs import CONFIG_EN
+introduce_dialog = '''
+Ah, Forgive me for not introducing myself, masters.
+I'm snippy, your virtual assistant in this restaurant,
+I'm still under development, so you could only see me talking
+right now.
+'''
 
-with open('datasets/orderfood/dataset.json') as f:
-    sample_dataset = json.load(f)
+nlu_engine = HeySnipsNLUParser(dataset_path='datasets/orderfood/dataset.json')
 
-nlu_engine = SnipsNLUEngine(config=CONFIG_EN)
-nlu_engine = nlu_engine.fit(sample_dataset)
+print('Greetings! Welcome to snips restaurant, let us warm your day!')
 try:
     while True:
         text = input('Your command: \n|__ ')
-        parsing = nlu_engine.parse(text)
-        print(parsing)
+        user_intent, intent_probability, slots = nlu_engine.parse(text)
+
+        print(f'User intent: {user_intent}, probability: {intent_probability}')
+        print('Parsed slots:')
+
+        for idx, slot in enumerate(slots):
+            entity = slot['entity']
+            raw_value = slot['rawValue']
+            print(f'Slot {idx + 1}:')
+            print(f'\tentity: {entity}, rawValue: {raw_value}')
+
+        print()
+        if user_intent == 'Introduce' and intent_probability >= 0.43:
+            print(introduce_dialog)
+
 except KeyboardInterrupt:
     print('Program ended')
