@@ -42,6 +42,77 @@
     }
   },
   "intents": {
+    "GiveMenu": {
+      "utterances": [
+        {
+          "data": [
+            {
+              "text": "Could you give us the menu, please?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Could I get the menu, please?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Where's the menu?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "There's no menu on the desk"
+            }
+          ]
+        }
+      ]
+    },
+    "Introduce": {
+      "utterances": [
+        {
+          "data": [
+            {
+              "text": "Who are you?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "What's your name?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Who's talking to me?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "What in the world are you?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Who the hell are you?"
+            }
+          ]
+        }
+      ]
+    },
     "OrderFood": {
       "utterances": [
         {
@@ -125,6 +196,59 @@
             },
             {
               "text": ", please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "I want to order a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "French Fries"
+            },
+            {
+              "text": ", please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "I want a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salad"
+            },
+            {
+              "text": " and she wants some "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "french fries"
+            },
+            {
+              "text": ", please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Excuse me, could I add a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salad"
+            },
+            {
+              "text": " please?"
             }
           ]
         }
@@ -266,6 +390,29 @@
               "text": " please"
             }
           ]
+        },
+        {
+          "data": [
+            {
+              "text": "Excuse me, ould I add a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salad"
+            },
+            {
+              "text": ", "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "to go"
+            },
+            {
+              "text": " please"
+            }
+          ]
         }
       ]
     },
@@ -335,6 +482,38 @@
               "entity": "food",
               "slot_name": "food",
               "text": "French Fries"
+            }
+          ]
+        }
+      ]
+    },
+    "WhereShouldISeat": {
+      "utterances": [
+        {
+          "data": [
+            {
+              "text": "Where should I seat?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Is there a table for us?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Where should we seat?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Could you bring us to our table?"
             }
           ]
         }

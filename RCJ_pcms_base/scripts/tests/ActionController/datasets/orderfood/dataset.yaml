@@ -1,3 +1,34 @@
+# Introduce intent
+---
+type: intent
+name: Introduce
+utterances:
+  - Who are you?
+  - What's your name?
+  - Who's talking to me?
+  - What in the world are you?
+  - Who the hell are you?
+
+# WhereShouldISeat intent
+---
+type: intent
+name: WhereShouldISeat
+utterances:
+  - Where should I seat?
+  - Is there a table for us?
+  - Where should we seat?
+  - Could you bring us to our table?
+
+# GiveMenu intent
+---
+type: intent
+name: GiveMenu
+utterances:
+  - Could you give us the menu, please?
+  - Could I get the menu, please?
+  - Where's the menu?
+  - There's no menu on the desk
+
 # OrderFood intent
 ---
 type: intent
@@ -12,6 +43,9 @@ utterances:
   - We will have the [food:food](French Fries), please
   - Can I have a [food:food](meat salad) please
   - I want a [food:food](spgahetti), please
+  - I want to order a [food:food](French Fries), please
+  - I want a [food:food](meat salad) and she wants some [food:food](french fries), please
+  - Excuse me, could I add a [food:food](meat salad) please?
 
 # OrderFoodTakeOut intent
 ---
@@ -29,6 +63,7 @@ utterances:
   - We will have the [food:food](French Fries), [takeout:takeout](take out)
   - Can I have a [food:food](meat salad) [takeout:takeout](to go) please
   - I want a [food:food](spgahetti) in my [takeout:takeout](doggy bag) please
+  - Excuse me, ould I add a [food:food](meat salad), [takeout:takeout](to go) please
 
 # RemoveOrder intent
 ---
