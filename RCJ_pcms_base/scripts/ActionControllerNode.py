@@ -34,57 +34,7 @@ from std_msgs.msg import String
 
 from core.Nodes import Node
 from core.tools import Speaker
-
-
-class NormalKeywordParser:
-    def __init__(self, configs: dict):
-        self.configs = configs
-
-    def parse(self, text):
-        for meaning, configs in self.configs.items():
-            require_keywords = configs['and']
-            separately_keywords = configs['or']
-            rospy.loginfo(f'{require_keywords}, {separately_keywords}')
-
-            require_keywords_status = self._has_require_keywords(text, require_keywords)
-            separately_keywords_status = self._has_separately_keywords(text, separately_keywords)
-
-            if require_keywords_status and separately_keywords_status:
-                response = configs['response']
-                actions = configs['action']
-                rospy.loginfo(f'Text \'{text}\' matched, Meaning: {meaning}, response: {response}')
-                return meaning, response, actions
-        else:
-            rospy.logerr(f'Text \'{text}\' doesn\'t match anybody in the config file')
-            return '', '', []
-
-    @staticmethod
-    def _input_text_processor(text):
-        return text.strip().lower().split()
-
-    def _has_require_keywords(self, text, require_keywords):
-        input_text = self._input_text_processor(text)
-        if len(require_keywords) == 0:
-            return True
-
-        for require_keyword in require_keywords:
-            require_keyword = self._input_text_processor(require_keyword)[0]
-            if require_keyword not in input_text:
-                return False
-        else:
-            return True
-
-    def _has_separately_keywords(self, text, separately_keywords):
-        input_text = self._input_text_processor(text)
-        if len(separately_keywords) == 0:
-            return True
-
-        for separately_keyword in separately_keywords:
-            separately_keyword = self._input_text_processor(separately_keyword)[0]
-            if separately_keyword in input_text:
-                return True
-        else:
-            return False
+from core.utils.KeywordParsers import NormalKeywordParser
 
 
 class ActionControllerNode(Node):
