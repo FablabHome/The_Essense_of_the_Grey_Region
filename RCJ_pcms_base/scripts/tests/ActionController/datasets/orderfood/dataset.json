@@ -8,17 +8,72 @@
           "value": "French Fries"
         },
         {
-          "synonyms": [],
+          "synonyms": [
+            "meat salads"
+          ],
           "value": "meat salad"
         },
         {
-          "synonyms": [],
+          "synonyms": [
+            "spaghettis"
+          ],
           "value": "spaghetti"
+        },
+        {
+          "synonyms": [
+            "hot choco",
+            "hot chocolates",
+            "hot chocos"
+          ],
+          "value": "hot chocolate"
+        },
+        {
+          "synonyms": [
+            "a glass of water"
+          ],
+          "value": "water"
+        },
+        {
+          "synonyms": [],
+          "value": "cappucino"
+        },
+        {
+          "synonyms": [],
+          "value": "tea"
+        },
+        {
+          "synonyms": [
+            "hamburgers"
+          ],
+          "value": "hamburger"
+        },
+        {
+          "synonyms": [],
+          "value": "Ketchup"
+        },
+        {
+          "synonyms": [
+            "tacos"
+          ],
+          "value": "taco"
+        },
+        {
+          "synonyms": [
+            "marshmellos"
+          ],
+          "value": "marshmello"
+        },
+        {
+          "synonyms": [
+            "steaks"
+          ],
+          "value": "steak"
         }
       ],
       "matching_strictness": 1.0,
       "use_synonyms": true
     },
+    "snips/number": {},
     "takeout": {
       "automatically_extensible": false,
       "data": [
@@ -69,6 +124,31 @@
           "data": [
             {
               "text": "There's no menu on the desk"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Can you lend me the menu, please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Can you please give me the menu"
+            }
+          ]
+        }
+      ]
+    },
+    "HeySnippy": {
+      "utterances": [
+        {
+          "data": [
+            {
+              "text": "Hey snippy"
             }
           ]
         }
@@ -145,12 +225,68 @@
         {
           "data": [
             {
-              "text": "Give her a "
+              "text": "Give me a "
             },
             {
               "entity": "food",
               "slot_name": "food",
               "text": "meat salad"
+            },
+            {
+              "text": ", please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Make some "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "French Fries"
+            },
+            {
+              "text": ", please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Make me a cup of "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "cappucino"
+            },
+            {
+              "text": ", please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Make me "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "3"
+            },
+            {
+              "text": " cups of "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "cappucino"
+            },
+            {
+              "text": ", please"
             }
           ]
         },
@@ -202,35 +338,12 @@
         {
           "data": [
             {
-              "text": "I want to order a "
+              "text": "I want to order some "
             },
             {
               "entity": "food",
               "slot_name": "food",
               "text": "French Fries"
-            },
-            {
-              "text": ", please"
-            }
-          ]
-        },
-        {
-          "data": [
-            {
-              "text": "I want a "
-            },
-            {
-              "entity": "food",
-              "slot_name": "food",
-              "text": "meat salad"
-            },
-            {
-              "text": " and she wants some "
-            },
-            {
-              "entity": "food",
-              "slot_name": "food",
-              "text": "french fries"
             },
             {
               "text": ", please"
@@ -249,6 +362,275 @@
             },
             {
               "text": " please?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Can I have a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "hot choco"
+            },
+            {
+              "text": " please?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "A "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "Hot chocolate"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "I want to order a "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "spgahetti"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Get me "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "4"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "spaghettis"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Can I have "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "two"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salads"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "I want "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "three"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "spgahettis"
+            },
+            {
+              "text": ", please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "I want to order "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "three"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salads"
+            },
+            {
+              "text": ", please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Excuse me, could I add "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "one"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salad"
+            },
+            {
+              "text": " please?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Can I have "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "two"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "hot chocos"
+            },
+            {
+              "text": " please?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "\\"
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "One"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "Hot chocolate"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "I want to order "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "three"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "spgahettis"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Give me "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "three"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "tacos"
+            },
+            {
+              "text": ", please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Lend me "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "2"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salads"
             }
           ]
         }
@@ -394,6 +776,60 @@
         {
           "data": [
             {
+              "text": "Make me a cup of "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "cappucino"
+            },
+            {
+              "text": ", "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "to go"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Make me "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "3"
+            },
+            {
+              "text": " cups of "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "cappucino"
+            },
+            {
+              "text": ", "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "take out"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
               "text": "Excuse me, ould I add a "
             },
             {
@@ -411,6 +847,313 @@
             },
             {
               "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Get me "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "4"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "spaghettis"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "to go"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Can I have "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "two"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salads"
+            },
+            {
+              "text": " in my "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "doggy bag"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "I want "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "three"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "spgahettis"
+            },
+            {
+              "text": ", "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "take out"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "I want to order "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "three"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salads"
+            },
+            {
+              "text": ", "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "to go"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Excuse me, could I add "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "one"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "meat salad"
+            },
+            {
+              "text": " to my "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "doggy bag"
+            },
+            {
+              "text": " please?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Can I have "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "two"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "hot chocos"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "to go"
+            },
+            {
+              "text": " please?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "\\"
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "One"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "Hot chocolate"
+            },
+            {
+              "text": ", "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "to go"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "I want to order "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "three"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "spgahettis"
+            },
+            {
+              "text": ", "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "take out"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Give me "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "three"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "tacos"
+            },
+            {
+              "text": ", "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "to go"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Lend me a "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "doggy bag"
+            },
+            {
+              "text": " fo "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "4"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "hamburgers"
             }
           ]
         }
@@ -482,38 +1225,6 @@
               "entity": "food",
               "slot_name": "food",
               "text": "French Fries"
-            }
-          ]
-        }
-      ]
-    },
-    "WhereShouldISeat": {
-      "utterances": [
-        {
-          "data": [
-            {
-              "text": "Where should I seat?"
-            }
-          ]
-        },
-        {
-          "data": [
-            {
-              "text": "Is there a table for us?"
-            }
-          ]
-        },
-        {
-          "data": [
-            {
-              "text": "Where should we seat?"
-            }
-          ]
-        },
-        {
-          "data": [
-            {
-              "text": "Could you bring us to our table?"
             }
           ]
         }

@@ -9,15 +9,13 @@ utterances:
   - What in the world are you?
   - Who the hell are you?
 
-# WhereShouldISeat intent
+# HeySnippy intent
 ---
 type: intent
-name: WhereShouldISeat
+name: HeySnippy
 utterances:
-  - Where should I seat?
-  - Is there a table for us?
-  - Where should we seat?
-  - Could you bring us to our table?
+  - Hey snippy
+
 
 # GiveMenu intent
 ---
@@ -28,6 +26,8 @@ utterances:
   - Could I get the menu, please?
   - Where's the menu?
   - There's no menu on the desk
+  - Can you lend me the menu, please
+  - Can you please give me the menu
 
 # OrderFood intent
 ---
@@ -36,16 +36,33 @@ name: OrderFood
 slots:
   - name: food
     entity: food
+  - name: amount
+    entity: snips/number
 utterances:
   - We would like to order some [food:food](French Fries) please
   - Get me a [food:food](spaghetti)
-  - Give her a [food:food](meat salad)
+  - Give me a [food:food](meat salad), please
+  - Make some [food:food](French Fries), please
+  - Make me a cup of [food:food](cappucino), please
+  - Make me [amount:snips/number](3) cups of [food:food](cappucino), please
   - We will have the [food:food](French Fries), please
   - Can I have a [food:food](meat salad) please
   - I want a [food:food](spgahetti), please
-  - I want to order a [food:food](French Fries), please
-  - I want a [food:food](meat salad) and she wants some [food:food](french fries), please
+  - I want to order some [food:food](French Fries), please
   - Excuse me, could I add a [food:food](meat salad) please?
+  - Can I have a [food:food](hot choco) please?
+  - A [food:food](Hot chocolate) please
+  - I want to order a [food:food](spgahetti) please
+  - Get me [amount:snips/number](4) [food:food](spaghettis)
+  - Can I have [amount:snips/number](two) [food:food](meat salads) please
+  - I want [amount:snips/number](three) [food:food](spgahettis), please
+  - I want to order [amount:snips/number](three) [food:food](meat salads), please
+  - Excuse me, could I add [amount:snips/number](one) [food:food](meat salad) please?
+  - Can I have [amount:snips/number](two) [food:food](hot chocos) please?
+  - \[amount:snips/number](One) [food:food](Hot chocolate) please
+  - I want to order [amount:snips/number](three) [food:food](spgahettis) please
+  - Give me [amount:snips/number](three) [food:food](tacos), please
+  - Lend me [amount:snips/number](2) [food:food](meat salads)
 
 # OrderFoodTakeOut intent
 ---
@@ -56,6 +73,8 @@ slots:
     entity: food
   - name: takeout
     entity: takeout
+  - name: amount
+    entity: snips/number
 utterances:
   - We would like to order some [food:food](French Fries) [takeout:takeout](to go) please
   - Get me a [food:food](spaghetti) in a [takeout:takeout](doggy bag) please
@@ -63,7 +82,19 @@ utterances:
   - We will have the [food:food](French Fries), [takeout:takeout](take out)
   - Can I have a [food:food](meat salad) [takeout:takeout](to go) please
   - I want a [food:food](spgahetti) in my [takeout:takeout](doggy bag) please
+  - Make me a cup of [food:food](cappucino), [takeout:takeout](to go) please
+  - Make me [amount:snips/number](3) cups of [food:food](cappucino), [takeout:takeout](take out) please
   - Excuse me, ould I add a [food:food](meat salad), [takeout:takeout](to go) please
+  - Get me [amount:snips/number](4) [food:food](spaghettis) [takeout:takeout](to go) please
+  - Can I have [amount:snips/number](two) [food:food](meat salads) in my [takeout:takeout](doggy bag) please
+  - I want [amount:snips/number](three) [food:food](spgahettis), [takeout:takeout](take out) please
+  - I want to order [amount:snips/number](three) [food:food](meat salads), [takeout:takeout](to go) please
+  - Excuse me, could I add [amount:snips/number](one) [food:food](meat salad) to my [takeout:takeout](doggy bag) please?
+  - Can I have [amount:snips/number](two) [food:food](hot chocos) [takeout:takeout](to go) please?
+  - \[amount:snips/number](One) [food:food](Hot chocolate), [takeout:takeout](to go) please
+  - I want to order [amount:snips/number](three) [food:food](spgahettis), [takeout:takeout](take out) please
+  - Give me [amount:snips/number](three) [food:food](tacos), [takeout:takeout](to go) please
+  - Lend me a [takeout:takeout](doggy bag) fo [amount:snips/number](4) [food:food](hamburgers)
 
 # RemoveOrder intent
 ---
@@ -93,8 +124,17 @@ name: food
 automatically_extensible: no
 values:
 - French Fries
-- meat salad
-- spaghetti
+- [meat salad, meat salads]
+- [spaghetti, spaghettis]
+- [hot chocolate, hot choco, hot chocolates, hot chocos]
+- [water, a glass of water]
+- cappucino
+- tea
+- [hamburger, hamburgers]
+- Ketchup
+- [taco, tacos]
+- [marshmello, marshmellos]
+- [steak, steaks]
 
 # takeout entity
 ---
@@ -105,3 +145,4 @@ values:
 - [take out, takeout]
 - to go
 - doggy bag
+  
