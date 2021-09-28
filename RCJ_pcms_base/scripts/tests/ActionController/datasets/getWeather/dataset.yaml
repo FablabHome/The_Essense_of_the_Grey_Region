@@ -7,9 +7,11 @@ slots:
     entity: room
 utterances:
   - Turn on the lights in the [room](kitchen)
-  - give me some light in the [room](bathroom) please
+  - give me some light [room](here) please
   - Can you light up the [room](living room)?
   - switch the [room](bedroom)'s lights on please
+  - Could you give me some light [room:room](here)?
+  - I want some light [room:room](here)
 
 # turnLightOff intent
 ---
@@ -65,3 +67,4 @@ values:
 - bedroom
 - [living room, main room, lounge]
 - [garden, yard, backyard]
+- here

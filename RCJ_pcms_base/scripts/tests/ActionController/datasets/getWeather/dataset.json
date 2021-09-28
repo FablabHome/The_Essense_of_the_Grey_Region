@@ -20,6 +20,10 @@
             "backyard"
           ],
           "value": "garden"
+        },
+        {
+          "synonyms": [],
+          "value": "here"
         }
       ],
       "matching_strictness": 1.0,
@@ -337,12 +341,12 @@
         {
           "data": [
             {
-              "text": "give me some light in the "
+              "text": "give me some light "
             },
             {
               "entity": "room",
               "slot_name": "room",
-              "text": "bathroom"
+              "text": "here"
             },
             {
               "text": " please"
@@ -376,6 +380,33 @@
             },
             {
               "text": "'s lights on please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Could you give me some light "
+            },
+            {
+              "entity": "room",
+              "slot_name": "room",
+              "text": "here"
+            },
+            {
+              "text": "?"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "I want some light "
+            },
+            {
+              "entity": "room",
+              "slot_name": "room",
+              "text": "here"
             }
           ]
         }
