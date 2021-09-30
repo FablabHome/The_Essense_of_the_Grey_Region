@@ -1,22 +1,46 @@
+import struct
 import sys
+from os import path
 
+import pvporcupine
+import pyaudio
 import speech_recognition as sr
+from rospkg import RosPack
 
 
 class WakeUpWord:
     def __init__(self):
+        base = RosPack().get_path('rcj_pcms_base') + '/..'
+        self.__hey_snippy_model = path.join(base,
+                                            'models/PicovoiceWakeUp/hey-snippy__en_linux_2021-10-30-utc_v1_9_0.ppn')
+        self.__assistant_model = path.join(base,
+                                           'models/PicovoiceWakeUp/assistant__en_linux_2021-10-30-utc_v1_9_0.ppn')
+        self.__hey_robie_model = path.join(base,
+                                           'models/PicovoiceWakeUp/hey-robie__en_linux_2021-10-30-utc_v1_9_0.ppn')
+
+        self.porcupine = pvporcupine.create(
+            library_path=pvporcupine.LIBRARY_PATH,
+            model_path=pvporcupine.MODEL_PATH,
+            keyword_paths=[
+                self.__hey_snippy_model,
+                self.__assistant_model,
+                self.__hey_robie_model],
+        )
+
+        pa = pyaudio.PyAudio()
+
+        self.audio_stream = pa.open(
+            rate=self.porcupine.sample_rate,
+            channels=1,
+            format=pyaudio.paInt16,
+            input=True,
+            frames_per_buffer=self.porcupine.frame_length,
+        )
+
         self.recognizer = sr.Recognizer()
         self.microphone = sr.Microphone()
         with self.microphone as source:
             self.recognizer.adjust_for_ambient_noise(source)
-
-        self.stop_listening = self.recognizer.listen_in_background(self.microphone, self.callback)
-        self.hotword_detected = False
-
-    def callback(self, _, audio):
-        text = self.__recognize(audio)
-        if 'hey' in text:
-            self.hotword_detected = True
 
     def __listen_to_audio(self):
         with self.microphone as source:
@@ -40,14 +64,14 @@ class WakeUpWord:
     def main(self):
         try:
             while True:
-                if self.hotword_detected:
-                    self.stop_listening(wait_for_stop=True)
+                pcm = self.audio_stream.read(self.porcupine.frame_length)
+                pcm = struct.unpack_from("h" * self.porcupine.frame_length, pcm)
+                result = self.porcupine.process(pcm)
+                if result >= 0:
                     print('Hotword detected, please start speaking')
                     audio = self.__listen_to_audio()
                     text = self.__recognize(audio)
                     print(f'You said: {text}')
-                    self.stop_listening = self.recognizer.listen_in_background(self.microphone, self.callback)
-                    self.hotword_detected = False
         except KeyboardInterrupt:
             sys.exit(0)
 
