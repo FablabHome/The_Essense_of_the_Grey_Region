@@ -1,0 +1,13 @@
+# OrderFood intent
+---
+type: intent
+name: OrderFood
+slots:
+  - name: food
+    entity: food
+  - name: amount
+    entity: snips/number
+utterances:
+  - This experiment looks interesting, what a wonderful creation. Oh sorry, [amount](five) [food](hot dogs) please
+  - \[amount](Five) [food](hamburgers) please
+  - I want [amount](6) hamburgers, [amount](9) [food](hot dogs), some [food](french fries), and [amount](2) cups of [food](hot choco)

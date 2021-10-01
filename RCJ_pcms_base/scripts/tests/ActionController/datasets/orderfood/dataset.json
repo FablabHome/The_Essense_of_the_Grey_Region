@@ -34,8 +34,10 @@
           "value": "water"
         },
         {
-          "synonyms": [],
-          "value": "cappucino"
+          "synonyms": [
+            "cappuccinos"
+          ],
+          "value": "cappuccino"
         },
         {
           "synonyms": [],
@@ -43,7 +45,9 @@
         },
         {
           "synonyms": [
-            "hamburgers"
+            "hamburgers",
+            "burger",
+            "burgers"
           ],
           "value": "hamburger"
         },
@@ -68,6 +72,12 @@
             "steaks"
           ],
           "value": "steak"
+        },
+        {
+          "synonyms": [
+            "hot dogs"
+          ],
+          "value": "hot dog"
         }
       ],
       "matching_strictness": 1.0,
@@ -102,21 +112,21 @@
         {
           "data": [
             {
-              "text": "Could you give us the menu, please?"
+              "text": "Could you give us the menu, please"
             }
           ]
         },
         {
           "data": [
             {
-              "text": "Could I get the menu, please?"
+              "text": "Could I get the menu, please"
             }
           ]
         },
         {
           "data": [
             {
-              "text": "Where's the menu?"
+              "text": "Where's the menu"
             }
           ]
         },
@@ -159,35 +169,35 @@
         {
           "data": [
             {
-              "text": "Who are you?"
+              "text": "Who are you"
             }
           ]
         },
         {
           "data": [
             {
-              "text": "What's your name?"
+              "text": "What's your name"
             }
           ]
         },
         {
           "data": [
             {
-              "text": "Who's talking to me?"
+              "text": "Who's talking to me"
             }
           ]
         },
         {
           "data": [
             {
-              "text": "What in the world are you?"
+              "text": "What in the world are you"
             }
           ]
         },
         {
           "data": [
             {
-              "text": "Who the hell are you?"
+              "text": "Who the hell are you"
             }
           ]
         }
@@ -361,7 +371,7 @@
               "text": "meat salad"
             },
             {
-              "text": " please?"
+              "text": " please"
             }
           ]
         },
@@ -376,7 +386,7 @@
               "text": "hot choco"
             },
             {
-              "text": " please?"
+              "text": " please"
             }
           ]
         },
@@ -518,7 +528,7 @@
               "text": "meat salad"
             },
             {
-              "text": " please?"
+              "text": " please"
             }
           ]
         },
@@ -541,7 +551,7 @@
               "text": "hot chocos"
             },
             {
-              "text": " please?"
+              "text": " please"
             }
           ]
         },
@@ -1001,7 +1011,7 @@
               "text": "doggy bag"
             },
             {
-              "text": " please?"
+              "text": " please"
             }
           ]
         },
@@ -1032,7 +1042,7 @@
               "text": "to go"
             },
             {
-              "text": " please?"
+              "text": " please"
             }
           ]
         },
@@ -1156,6 +1166,60 @@
               "text": "hamburgers"
             }
           ]
+        },
+        {
+          "data": [
+            {
+              "text": "Can I have a "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "doggy bag"
+            },
+            {
+              "text": " for a "
+            },
+            {
+              "entity": "snips/number",
+              "slot_name": "amount",
+              "text": "five"
+            },
+            {
+              "text": " "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "tacos"
+            },
+            {
+              "text": " please"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "A "
+            },
+            {
+              "entity": "takeout",
+              "slot_name": "takeout",
+              "text": "doggy bag"
+            },
+            {
+              "text": " for my "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "hot chocolate"
+            },
+            {
+              "text": " please"
+            }
+          ]
         }
       ]
     },
@@ -1171,14 +1235,14 @@
         {
           "data": [
             {
-              "text": "Can I get the bill, please?"
+              "text": "Can I get the bill, please"
             }
           ]
         },
         {
           "data": [
             {
-              "text": "Can I foot the bill?"
+              "text": "Can I foot the bill"
             }
           ]
         }
@@ -1197,7 +1261,7 @@
               "text": "meat salad"
             },
             {
-              "text": " please?"
+              "text": " please"
             }
           ]
         },
@@ -1212,7 +1276,7 @@
               "text": "spaghetti"
             },
             {
-              "text": " please?"
+              "text": " please"
             }
           ]
         },
@@ -1225,6 +1289,21 @@
               "entity": "food",
               "slot_name": "food",
               "text": "French Fries"
+            }
+          ]
+        },
+        {
+          "data": [
+            {
+              "text": "Could you remove those "
+            },
+            {
+              "entity": "food",
+              "slot_name": "food",
+              "text": "hamburgers"
+            },
+            {
+              "text": " from our bill, please"
             }
           ]
         }

@@ -3,11 +3,11 @@
 type: intent
 name: Introduce
 utterances:
-  - Who are you?
-  - What's your name?
-  - Who's talking to me?
-  - What in the world are you?
-  - Who the hell are you?
+  - Who are you
+  - What's your name
+  - Who's talking to me
+  - What in the world are you
+  - Who the hell are you
 
 # HeySnippy intent
 ---
@@ -22,9 +22,9 @@ utterances:
 type: intent
 name: GiveMenu
 utterances:
-  - Could you give us the menu, please?
-  - Could I get the menu, please?
-  - Where's the menu?
+  - Could you give us the menu, please
+  - Could I get the menu, please
+  - Where's the menu
   - There's no menu on the desk
   - Can you lend me the menu, please
   - Can you please give me the menu
@@ -49,16 +49,16 @@ utterances:
   - Can I have a [food:food](meat salad) please
   - I want a [food:food](spgahetti), please
   - I want to order some [food:food](French Fries), please
-  - Excuse me, could I add a [food:food](meat salad) please?
-  - Can I have a [food:food](hot choco) please?
+  - Excuse me, could I add a [food:food](meat salad) please
+  - Can I have a [food:food](hot choco) please
   - A [food:food](Hot chocolate) please
   - I want to order a [food:food](spgahetti) please
   - Get me [amount:snips/number](4) [food:food](spaghettis)
   - Can I have [amount:snips/number](two) [food:food](meat salads) please
   - I want [amount:snips/number](three) [food:food](spgahettis), please
   - I want to order [amount:snips/number](three) [food:food](meat salads), please
-  - Excuse me, could I add [amount:snips/number](one) [food:food](meat salad) please?
-  - Can I have [amount:snips/number](two) [food:food](hot chocos) please?
+  - Excuse me, could I add [amount:snips/number](one) [food:food](meat salad) please
+  - Can I have [amount:snips/number](two) [food:food](hot chocos) please
   - \[amount:snips/number](One) [food:food](Hot chocolate) please
   - I want to order [amount:snips/number](three) [food:food](spgahettis) please
   - Give me [amount:snips/number](three) [food:food](tacos), please
@@ -89,12 +89,14 @@ utterances:
   - Can I have [amount:snips/number](two) [food:food](meat salads) in my [takeout:takeout](doggy bag) please
   - I want [amount:snips/number](three) [food:food](spgahettis), [takeout:takeout](take out) please
   - I want to order [amount:snips/number](three) [food:food](meat salads), [takeout:takeout](to go) please
-  - Excuse me, could I add [amount:snips/number](one) [food:food](meat salad) to my [takeout:takeout](doggy bag) please?
-  - Can I have [amount:snips/number](two) [food:food](hot chocos) [takeout:takeout](to go) please?
+  - Excuse me, could I add [amount:snips/number](one) [food:food](meat salad) to my [takeout:takeout](doggy bag) please
+  - Can I have [amount:snips/number](two) [food:food](hot chocos) [takeout:takeout](to go) please
   - \[amount:snips/number](One) [food:food](Hot chocolate), [takeout:takeout](to go) please
   - I want to order [amount:snips/number](three) [food:food](spgahettis), [takeout:takeout](take out) please
   - Give me [amount:snips/number](three) [food:food](tacos), [takeout:takeout](to go) please
   - Lend me a [takeout:takeout](doggy bag) fo [amount:snips/number](4) [food:food](hamburgers)
+  - Can I have a [takeout](doggy bag) for a [amount](five) [food:food](tacos) please
+  - A [takeout](doggy bag) for my [food:food](hot chocolate) please
 
 # RemoveOrder intent
 ---
@@ -104,9 +106,10 @@ slots:
   - name: food
     entity: food
 utterances:
-  - Could you cancel our [food:food](meat salad) please?
-  - Excuse me, can I cancel the [food:food](spaghetti) please?
+  - Could you cancel our [food:food](meat salad) please
+  - Excuse me, can I cancel the [food:food](spaghetti) please
   - Please cancel that [food:food](French Fries)
+  - Could you remove those [food](hamburgers) from our bill, please
 
 # PayTheBill intent
 ---
@@ -114,8 +117,8 @@ type: intent
 name: PayTheBill
 utterances:
   - Check, please
-  - Can I get the bill, please?
-  - Can I foot the bill?
+  - Can I get the bill, please
+  - Can I foot the bill
 
 # food entity
 ---
@@ -128,13 +131,14 @@ values:
 - [spaghetti, spaghettis]
 - [hot chocolate, hot choco, hot chocolates, hot chocos]
 - [water, a glass of water]
-- cappucino
+- [cappuccino, cappuccinos]
 - tea
-- [hamburger, hamburgers]
+- [hamburger, hamburgers, burger, burgers]
 - Ketchup
 - [taco, tacos]
 - [marshmello, marshmellos]
 - [steak, steaks]
+- [hot dog, hot dogs]
 
 # takeout entity
 ---

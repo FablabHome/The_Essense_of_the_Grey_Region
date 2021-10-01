@@ -23,6 +23,7 @@ Ketchup                         $0
 Tacos                          $15
 Marshmellos                    $10
 Steak                          $27
+hot dog                        $10
 '''
 
 datasets = {
