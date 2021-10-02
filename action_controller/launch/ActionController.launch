@@ -3,7 +3,7 @@
     <arg name="action_commands" default="$(find rcj_pcms_base)/scripts/action_commands"/>
     <node
         name="acp"
-        pkg="rcj_pcms_base"
+        pkg="action_controller"
         type="ActionControllerNode.py"
         required="true"
         output="screen"
