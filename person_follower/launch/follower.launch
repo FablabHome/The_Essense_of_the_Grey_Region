@@ -5,7 +5,7 @@
          default="$(find rcj_pcms_base)../models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.xml"/>
     <node
         name="pf_initializer"
-        pkg="rcj_pcms_base"
+        pkg="person_follower"
         type="PFInitialize.py"
         required="false"
         output="screen"
@@ -15,7 +15,7 @@
     </node>
     <node
         name="person_follower"
-        pkg="rcj_pcms_base"
+        pkg="person_follower"
         type="PersonFollower.py"
         required="true"
         output="screen"
@@ -25,7 +25,7 @@
     </node>
     <node
         name="waypoint_recorder"
-        pkg="rcj_pcms_base"
+        pkg="person_follower"
         type="WayPointRecorder.py"
         required="true"
         output="screen"
