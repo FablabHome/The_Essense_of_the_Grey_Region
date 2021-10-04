@@ -38,8 +38,6 @@ from core.utils.KeywordParsers import NormalKeywordParser
 
 
 class ActionControllerNode(Node):
-    # TODO: Separate the parser part into another object,
-    #       as snips will be joining the party
     def __init__(self):
         super(ActionControllerNode, self).__init__('acp', anonymous=False)
 
