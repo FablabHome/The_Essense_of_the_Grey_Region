@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 """
-import random
+
 from collections import deque
 from copy import copy
 
@@ -32,8 +32,7 @@ import numpy as np
 import rospy
 from cv_bridge import CvBridge
 from home_robot_msgs.msg import ObjectBoxes, PFRobotData, PFWaypoints, ObjectBox
-from home_robot_msgs.srv import PFInitializer, PFInitializerRequest, PFInitializerResponse, ResetPF, ResetPFResponse, \
-    ResetPFRequest
+from home_robot_msgs.srv import PFInitializer, PFInitializerRequest, PFInitializerResponse, ResetPF, ResetPFRequest
 from sensor_msgs.msg import CompressedImage
 from std_srvs.srv import Trigger
 
@@ -211,7 +210,7 @@ class PersonFollower(Node):
             if not self.initialized:
                 continue
 
-            srcframe = self.rgb_image
+            srcframe = self.rgb_image.copy()
             if srcframe is None:
                 continue
 
