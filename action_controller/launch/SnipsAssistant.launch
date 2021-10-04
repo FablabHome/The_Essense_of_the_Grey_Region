@@ -1,0 +1,16 @@
+<launch>
+    <arg name="engine_name" default="engine-1"/>
+    <arg name="engine_path" default="$(find action_controller)/engines/engine"/>
+    <arg name="config_file" default="config.json"/>
+    <node
+            name="snips_intent_manager"
+            pkg="action_controller"
+            type="SnipsIntentManagerNode.py"
+            required="true"
+            output="screen"
+    >
+        <param name="engine_name" type="str" value="$(arg engine_name)"/>
+        <param name="engine_path" type="str" value="$(arg engine_path)"/>
+        <param name="config_file" type="str" value="$(arg config_file)"/>
+    </node>
+</launch>
