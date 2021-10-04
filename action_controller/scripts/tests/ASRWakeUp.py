@@ -24,7 +24,8 @@ class WakeUpWord:
             keyword_paths=[
                 self.__hey_snippy_model,
                 self.__assistant_model,
-                self.__hey_robie_model],
+                self.__hey_robie_model
+            ]
         )
 
         pa = pyaudio.PyAudio()
