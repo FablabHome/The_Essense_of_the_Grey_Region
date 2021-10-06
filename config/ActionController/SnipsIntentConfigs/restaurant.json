@@ -1,0 +1,20 @@
+{
+    "Introduce": {
+        "allow_preempt": true
+    },
+    "GiveMenu": {
+        "allow_preempt": true
+    },
+    "OrderFood": {
+        "allow_preempt": false
+    },
+    "OrderFoodTakeOut": {
+        "allow_preempt": false
+    },
+    "RemoveOrder": {
+        "allow_preempt": false
+    },
+    "PayTheBill": {
+        "allow_preempt": false
+    }
+}
