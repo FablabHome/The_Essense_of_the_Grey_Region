@@ -32,7 +32,8 @@ from rospkg import RosPack
 
 from core.Nodes import Node
 from core.utils.KeywordParsers import HeySnipsNLUParser
-from home_robot_msgs.msg import IntentManagerAction, IntentManagerGoal, Blacklist
+from home_robot_msgs.msg import IntentManagerAction, IntentManagerGoal, Blacklist, IntentACControllerAction, \
+    IntentACControllerGoal, IntentManagerResult
 
 
 class SnipsIntentManager(Node):
@@ -59,13 +60,19 @@ class SnipsIntentManager(Node):
 
         # The Intent blacklist from boss
         self.intent_blacklist = []
-        
+
         # Get the blacklist from boss
         rospy.Subscriber(
             "/snips_intent_boss/blacklist",
             Blacklist,
             self.blacklist_cb,
             queue_size=1
+        )
+
+        # Create a instance to call the ActionController
+        self.action_controller = actionlib.SimpleActionClient(
+            'snips_intent_ac',
+            IntentACControllerAction
         )
 
         # Initialize the action server
@@ -77,24 +84,31 @@ class SnipsIntentManager(Node):
         )
         self.manager_server.start()
 
+        self.main()
+
     def blacklist_cb(self, blacklist: Blacklist):
         self.intent_blacklist = blacklist.blacklist
 
     def voice_cb(self, voice_goal: IntentManagerGoal):
         # Get the text from the goal
-        text = voice_goal.text
-        rospy.loginfo(f'Parsing text: {text}')
+        raw_text = voice_goal.text
+        rospy.loginfo(f'Parsing text: {raw_text}')
+
+        # Feedback to the voice server that it was successes
+        self.manager_server.publish_feedback("Accepted")
+
         # Parse the intent from snips-nlu
-        parse_result = self.nlu_engine.parse(text)
-        
+        parse_result = self.nlu_engine.parse(raw_text)
+
         intent = parse_result.user_intent
         slots = parse_result.parsed_slots
-        
+
         if intent is None:
-            rospy.logwarn(f"Text '{text}' doesn't match any intents")
-            return
+            rospy.logwarn(f"Text '{raw_text}' doesn't match any intents")
+            intent = 'NotRecognized'
+
         # Show the report
-        rospy.loginfo(f"Text '{text}' successfully parsed, parsing result:")
+        rospy.loginfo(f"Text '{raw_text}' successfully parsed, parsing result:")
         self.__show_nlu_report(intent, slots)
 
         # Ignore the intent if it was in the blacklist
@@ -109,9 +123,33 @@ class SnipsIntentManager(Node):
             rospy.logwarn(f"Intent {intent}'s config doesn't exist, using default")
             intent_config = SnipsIntentManager.INTENT_DEFAULT_CONFIG
 
-        allow = 'allowed' if intent_config['allow_preempt'] else 'not allowed'
-        rospy.loginfo(f"Intent {intent} was {allow} to be preempted")
-        
+        # Send the intent to the snips_intent_a c
+        rospy.loginfo('Sending intent to /snips_intent_ac')
+
+        intent_goal = IntentACControllerGoal()
+        intent_goal.intent = intent
+        intent_goal.slots = json.dumps(slots)
+        intent_goal.raw_text = raw_text
+        intent_goal.flowed_intents = []
+
+        self.action_controller.send_goal(intent_goal)
+        rospy.loginfo('Goal sent')
+
+        # Show the preempt info
+        allow_preempt = intent_config['allow_preempt']
+        allow_msg = 'allowed' if intent_config['allow_preempt'] else 'not allowed'
+        rospy.loginfo(f"Intent {intent} was {allow_msg} to be preempted")
+
+        # If the intent wasn't allowed to be preempted, wait until there's a result
+        # Else, don't wait
+        if not allow_preempt:
+            rospy.loginfo('Waiting for the intent to be executed')
+            self.action_controller.wait_for_result()
+            rospy.loginfo('Intent executed successfully')
+
+        result = IntentManagerResult(True)
+        self.manager_server.set_succeeded(result, 'The intent was successfully handled')
+
     @staticmethod
     def __show_nlu_report(intent, slots):
         print('\n***************************\n| Parsing Result |')
@@ -128,7 +166,8 @@ class SnipsIntentManager(Node):
         print('*************************************************************\n')
 
     def main(self):
-        pass
+        while not rospy.is_shutdown():
+            self.rate.sleep()
 
     def reset(self):
         pass
