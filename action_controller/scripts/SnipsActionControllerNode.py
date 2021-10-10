@@ -29,10 +29,6 @@ import rospy
 from core.Nodes import ActionEvaluator
 
 
-def dummy_callback(intent, slots, raw_text, flowed_intents):
-    return
-
-
 class SnipsActionControllerNode(ActionEvaluator):
     def __init__(self):
         # Initialize the intent to callback map, must have NotRecognized situation
