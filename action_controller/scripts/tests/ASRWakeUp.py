@@ -1,5 +1,6 @@
 import struct
 import sys
+import wave
 from os import path
 
 import pvporcupine
@@ -28,9 +29,9 @@ class WakeUpWord:
             ]
         )
 
-        pa = pyaudio.PyAudio()
+        self.pa = pyaudio.PyAudio()
 
-        self.audio_stream = pa.open(
+        self.audio_stream = self.pa.open(
             rate=self.porcupine.sample_rate,
             channels=1,
             format=pyaudio.paInt16,
@@ -64,11 +65,20 @@ class WakeUpWord:
 
     def main(self):
         try:
+            buf = []
             while True:
-                pcm = self.audio_stream.read(self.porcupine.frame_length)
-                pcm = struct.unpack_from("h" * self.porcupine.frame_length, pcm)
+                audio = self.audio_stream.read(self.porcupine.frame_length)
+                buf.append(audio)
+                pcm = struct.unpack_from("h" * self.porcupine.frame_length, audio)
                 result = self.porcupine.process(pcm)
                 if result >= 0:
+                    wf = wave.open('/tmp/speech2.wav', "wb")
+                    wf.setnchannels(1)
+                    wf.setsampwidth(self.pa.get_sample_size(pyaudio.paInt16))
+                    wf.setframerate(self.porcupine.sample_rate)
+                    wf.writeframes(b''.join(buf))
+                    wf.close()
+                    buf = []
                     print('Hotword detected, please start speaking')
                     audio = self.__listen_to_audio()
                     text = self.__recognize(audio)
