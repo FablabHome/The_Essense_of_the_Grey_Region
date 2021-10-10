@@ -23,26 +23,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 """
-import json
 
-import actionlib
-import rospy
-from home_robot_msgs.msg import IntentACControllerAction, IntentACControllerResult, IntentACControllerGoal
-from home_robot_msgs.srv import StartFlow, StartFlowRequest
-from std_srvs.srv import Trigger
-
-from core.Nodes import Node
-from core.tools import Speaker
+from core.Nodes import ActionEvaluator
 
 
-def dummy_callback(intent, slots, raw_text, flowed_intents):
-    return
-
-
-class SnipsActionControllerNode(Node):
+class SnipsActionControllerNode(ActionEvaluator):
     def __init__(self):
-        super(SnipsActionControllerNode, self).__init__("snips_intent_ac", anonymous=False)
-
         # Initialize the intent to callback map, must have NotRecognized situation
         self.intent2callback = {
             'turnLightOn': self.__turnlightson,
@@ -50,48 +36,7 @@ class SnipsActionControllerNode(Node):
             'NotRecognized': self.__notrecognized
         }
 
-        # Call the start and stop flow service
-        self.__start_flow = rospy.ServiceProxy('/snips_intent_manager/start_flow', StartFlow)
-        self.stop_flow = rospy.ServiceProxy('/snips_intent_manager/stop_flow', Trigger)
-
-        # Initialize the speaker
-        self.speaker = Speaker()
-
-        # Initialize the action server
-        self.action_controller_server = actionlib.SimpleActionServer(
-            self.name,
-            IntentACControllerAction,
-            execute_cb=self.message_cb,
-            auto_start=False
-        )
-        self.action_controller_server.start()
-        self.main()
-
-    def message_cb(self, goal: IntentACControllerGoal):
-        # TODO async the callback function for preempt checking
-        # Parse the data
-        intent = goal.intent
-        slots = json.loads(goal.slots)
-        raw_text = goal.raw_text
-        flowed_intents = goal.flowed_intents
-
-        # Execute the callbacks
-        if intent not in self.intent2callback:
-            rospy.logerr(f"Intent {intent}'s callback doesn't exist, doing nothing")
-            callback = dummy_callback
-        else:
-            callback = self.intent2callback[intent]
-
-        callback(intent, slots, raw_text, flowed_intents)
-
-        # Set the callback was executed successfully
-        result = IntentACControllerResult(True)
-        self.action_controller_server.set_succeeded(result)
-
-    def start_flow(self, next_intents):
-        req = StartFlowRequest()
-        req.next_intents = next_intents
-        self.__start_flow(req)
+        super(SnipsActionControllerNode, self).__init__()
 
     def __turnlightson(self, intent, slots, raw_text, flowed_intents):
         room = None
@@ -100,7 +45,7 @@ class SnipsActionControllerNode(Node):
             self.start_flow(next_intents=['turnLightOn'])
             return
 
-        if flowed_intents[len(flowed_intents)-1] == 'turnLightOn':
+        if flowed_intents[len(flowed_intents) - 1] == 'turnLightOn':
             room = slots[0]['value']['value']
 
         self.speaker.say_until_end(f"Ok, let's light up the {room}, you can set the color or the intensity")
