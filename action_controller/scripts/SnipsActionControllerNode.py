@@ -45,11 +45,9 @@ class SnipsActionControllerNode(Node):
 
         # Initialize the intent to callback map, must have NotRecognized situation
         self.intent2callback = {
-            'Introduce': self.__introduce,
-            'GiveMenu': self.__show_menu,
-            'OrderFood': self.__order_food,
-            'OrderFoodTakeOut': self.__order_food,
-            'NotRecognized': self.__not_recognized
+            'turnLightOn': self.__turnlightson,
+            'setLightColor': self.__setcolor,
+            'NotRecognized': self.__notrecognized
         }
 
         # Call the start and stop flow service
@@ -95,84 +93,35 @@ class SnipsActionControllerNode(Node):
         req.next_intents = next_intents
         self.__start_flow(req)
 
-    def __introduce(self, intent, slots, raw_text, flowed_intents):
-        introduce_dialog = '''
-        Ah, Forgive me for not introducing myself, masters.
-        I'm snippy, your virtual assistant in this restaurant,
-        I'm still under development, so you could only see me talking
-        right now.
-        '''
-        self.speaker.say_until_end(introduce_dialog)
-
-    @staticmethod
-    def __show_menu(intent, slots, raw_text, flowed_intents):
-        menu = '''
-        Menu                          Price
-        -------------------------------------
-        French Fries                    $7
-        meat salad                     $20
-        spaghetti                      $23
-        hot chocolate                  $14
-        cappucino                      $19
-        tea                             $0
-        water                           $0
-        Hamburger                      $19
-        Ketchup                         $0
-        Tacos                          $15
-        Marshmellos                    $10
-        Steak                          $27
-        hot dog                        $10
-        '''
-        print(f"Sorry for your inconvenience, here's the menu\n\n{menu}")
-
-    def __order_food(self, intent, slots, raw_text, flowed_intents):
-        order_what = False
-        orders = {}
-        i = 0
-        while i < len(slots):
-            if slots[i]['slotName'] == 'amount':
-                amount = int(slots[i]['value']['value'])
-                try:
-                    next_slot = slots[i + 1]
-                    if next_slot['slotName'] == 'food':
-                        orders[next_slot['value']['value']] = amount
-                        i += 2
-                    elif next_slot['slotName'] == 'amount':
-                        orders[f'Unknown{i}'] = amount
-                        i += 1
-                        order_what = True
-
-                except IndexError:
-                    order_what = True
-                    orders[f'Unknown{i}'] = amount
-                    i += 1
-            elif slots[i]['slotName'] == 'food':
-                orders[slots[i]['value']['value']] = 1
-                i += 1
-
-        if order_what or len(slots) == 0:
-            self.speaker.say_until_end("I'm sorry, but could you repeat it again?")
-            self.start_flow(next_intents=['OrderFood', 'NotRecognized'])
+    def __turnlightson(self, intent, slots, raw_text, flowed_intents):
+        room = None
+        if len(slots) == 0:
+            self.speaker.say_until_end("OK, but which room?")
+            self.start_flow(next_intents=['turnLightOn'])
             return
 
-        if len(flowed_intents) > 0:
-            if set(flowed_intents) == {'OrderFood'}:
-                if not order_what:
-                    self.stop_flow()
+        if flowed_intents[len(flowed_intents)-1] == 'turnLightOn':
+            room = slots[0]['value']['value']
 
-        self.speaker.say_until_end('Ok, Gotcha')
-        print(orders)
+        self.speaker.say_until_end(f"Ok, let's light up the {room}, you can set the color or the intensity")
+        self.start_flow(next_intents=['setLightColor'])
 
-    def __not_recognized(self, intent, slots, raw_text, flowed_intents):
+    def __setcolor(self, intent, slots, raw_text, flowed_intents):
         if len(flowed_intents) == 0:
-            rospy.loginfo(f"Currently there isn't an action for '{raw_text}'")
-        elif flowed_intents[0] == 'OrderFood':
-            rospy.loginfo('Sorry, I could not understand what do you want to order, please say it again')
+            self.speaker.say_until_end("Ok settings the lights color")
+
+        elif flowed_intents[0] == 'turnLightOn':
+            self.speaker.say_until_end("Ok, lets change color to " + slots[0]['value']['value'])
             self.stop_flow()
 
+    def __notrecognized(self, intent, slots, raw_text, flowed_intents):
+        if len(flowed_intents) == 0:
+            self.speaker.say_until_end("Sorry, I don't understand that")
+        elif flowed_intents[0] == 'turnLightsOn':
+            self.speaker.say_until_end("Sorry, as you don't want to do more")
+
     def main(self):
-        while not rospy.is_shutdown():
-            self.rate.sleep()
+        pass
 
     def reset(self):
         pass
