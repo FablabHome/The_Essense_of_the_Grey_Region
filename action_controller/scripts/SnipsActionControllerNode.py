@@ -28,6 +28,8 @@ import json
 import actionlib
 import rospy
 from home_robot_msgs.msg import IntentACControllerAction, IntentACControllerResult, IntentACControllerGoal
+from home_robot_msgs.srv import StartFlow, StartFlowRequest
+from std_srvs.srv import Trigger
 
 from core.Nodes import Node
 
@@ -48,6 +50,10 @@ class SnipsActionControllerNode(Node):
             'OrderFoodTakeOut': self.__order_food,
             'NotRecognized': self.__not_recognized
         }
+
+        # Call the start and stop flow service
+        self.__start_flow = rospy.ServiceProxy('/snips_intent_manager/start_flow', StartFlow)
+        self.stop_flow = rospy.ServiceProxy('/snips_intent_manager/stop_flow', Trigger)
 
         # Initialize the action server
         self.action_controller_server = actionlib.SimpleActionServer(
@@ -80,6 +86,11 @@ class SnipsActionControllerNode(Node):
         result = IntentACControllerResult(True)
         self.action_controller_server.set_succeeded(result)
 
+    def start_flow(self, next_intents):
+        req = StartFlowRequest()
+        req.next_intents = next_intents
+        self.__start_flow(req)
+
     @staticmethod
     def __introduce(intent, slots, raw_text, flowed_intents):
         introduce_dialog = '''
@@ -111,31 +122,49 @@ class SnipsActionControllerNode(Node):
         '''
         print(f"Sorry for your inconvenience, here's the menu\n\n{menu}")
 
-    @staticmethod
-    def __order_food(intent, slots, raw_text, flowed_intents):
-        # amounts = []
-        # orders = []
-        # message = 'User ordered: '
-        # orders_message = []
-        # to_go = ''
-        # for idx, slot in enumerate(slots):
-        #     amounts.append(1)
-        #     if slot['slotName'] == 'amount':
-        #         amounts[idx] = int(slot['value']['value'])
-        #     if slot['slotName'] == 'food':
-        #         orders.append(slot['value']['value'])
-        #     if slot['slotName'] == 'takeout':
-        #         to_go = 'to go'
-        #     orders_message.append(f'{amounts[idx]} {orders[idx]}')
-        #
-        # orders_message.append(to_go)
-        # message += ', '.join(orders_message)
-        # rospy.loginfo(message)
-        rospy.loginfo(slots)
+    def __order_food(self, intent, slots, raw_text, flowed_intents):
+        order_what = False
+        orders = {}
+        i = 0
+        while i < len(slots):
+            if slots[i]['slotName'] == 'amount':
+                amount = int(slots[i]['value']['value'])
+                try:
+                    next_slot = slots[i + 1]
+                    if next_slot['slotName'] == 'food':
+                        orders[next_slot['value']['value']] = amount
+                        i += 2
+                    elif next_slot['slotName'] == 'amount':
+                        orders[f'Unknown{i}'] = amount
+                        i += 1
+                        order_what = True
 
-    @staticmethod
-    def __not_recognized(intent, slots, raw_text, flowed_intents):
-        rospy.loginfo(f"Currently there isn't an action for '{raw_text}'")
+                except IndexError:
+                    order_what = True
+                    orders[f'Unknown{i}'] = amount
+                    i += 1
+            elif slots[i]['slotName'] == 'food':
+                orders[slots[i]['value']['value']] = 1
+                i += 1
+
+        if order_what:
+            print('Order what?')
+            self.start_flow(next_intents=['OrderFood', 'NotRecognized'])
+
+        if len(flowed_intents) > 0:
+            if flowed_intents == ['OrderFood', 'OrderFood']:
+                if not order_what:
+                    print('Ok')
+                    self.stop_flow()
+
+        print(orders)
+
+    def __not_recognized(self, intent, slots, raw_text, flowed_intents):
+        if len(flowed_intents) == 0:
+            rospy.loginfo(f"Currently there isn't an action for '{raw_text}'")
+        elif flowed_intents[0] == 'OrderFood':
+            rospy.loginfo('Sorry, I could not understand what do you want to order, please say it again')
+            self.stop_flow()
 
     def main(self):
         while not rospy.is_shutdown():

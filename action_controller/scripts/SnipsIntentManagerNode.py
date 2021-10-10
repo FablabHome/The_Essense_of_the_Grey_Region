@@ -28,12 +28,14 @@ from os import path
 
 import actionlib
 import rospy
+from home_robot_msgs.msg import IntentManagerAction, IntentManagerGoal, Blacklist, IntentACControllerAction, \
+    IntentACControllerGoal, IntentManagerResult, IntentManagerFeedback
+from home_robot_msgs.srv import StartFlow, StartFlowRequest, StartFlowResponse
 from rospkg import RosPack
+from std_srvs.srv import Trigger, TriggerResponse
 
 from core.Nodes import Node
 from core.utils.KeywordParsers import HeySnipsNLUParser
-from home_robot_msgs.msg import IntentManagerAction, IntentManagerGoal, Blacklist, IntentACControllerAction, \
-    IntentACControllerGoal, IntentManagerResult
 
 
 class SnipsIntentManager(Node):
@@ -69,6 +71,15 @@ class SnipsIntentManager(Node):
             queue_size=1
         )
 
+        # Create the flow request entry
+        rospy.Service('~start_flow', StartFlow, self.start_flow_cb)
+        # Create the stop flow entry
+        rospy.Service('~stop_flow', Trigger, self.stop_flow_cb)
+
+        # Calling the SpeechToText node to start flow
+        self.s2t_start_flow = rospy.ServiceProxy('/voice/start_flow', Trigger)
+        self.s2t_stop_flow = rospy.ServiceProxy('/voice/stop_flow', Trigger)
+
         # Create a instance to call the ActionController
         self.action_controller = actionlib.SimpleActionClient(
             'snips_intent_ac',
@@ -84,7 +95,29 @@ class SnipsIntentManager(Node):
         )
         self.manager_server.start()
 
+        # The flowing variables
+        self.is_flowing = False
+        self.flowed_intents = []
+        self.possible_next_intents = []
+
+        # The current intent
+        self.current_intent = ''
+
         self.main()
+
+    def start_flow_cb(self, req: StartFlowRequest):
+        self.is_flowing = True
+        self.flowed_intents.append(self.current_intent)
+        self.possible_next_intents = req.next_intents
+        self.s2t_start_flow()
+        return StartFlowResponse(True)
+
+    def stop_flow_cb(self, req):
+        self.is_flowing = False
+        self.flowed_intents = []
+        self.possible_next_intents = []
+        self.s2t_stop_flow()
+        return TriggerResponse(success=True, message="The flow has successfully stopped")
 
     def blacklist_cb(self, blacklist: Blacklist):
         self.intent_blacklist = blacklist.blacklist
@@ -95,7 +128,9 @@ class SnipsIntentManager(Node):
         rospy.loginfo(f'Parsing text: {raw_text}')
 
         # Feedback to the voice server that it was successes
-        self.manager_server.publish_feedback("Accepted")
+        feedback = IntentManagerFeedback()
+        feedback.status = 'Accepted'
+        self.manager_server.publish_feedback(feedback)
 
         # Parse the intent from snips-nlu
         parse_result = self.nlu_engine.parse(raw_text)
@@ -106,6 +141,8 @@ class SnipsIntentManager(Node):
         if intent is None:
             rospy.logwarn(f"Text '{raw_text}' doesn't match any intents")
             intent = 'NotRecognized'
+
+        self.current_intent = intent
 
         # Show the report
         rospy.loginfo(f"Text '{raw_text}' successfully parsed, parsing result:")
@@ -126,11 +163,18 @@ class SnipsIntentManager(Node):
         # Send the intent to the snips_intent_a c
         rospy.loginfo('Sending intent to /snips_intent_ac')
 
+        # Record the intent if it was flowing
+        if self.is_flowing:
+            if intent in self.possible_next_intents:
+                self.flowed_intents.append(intent)
+            else:
+                self.stop_flow_cb(None)
+
         intent_goal = IntentACControllerGoal()
         intent_goal.intent = intent
         intent_goal.slots = json.dumps(slots)
         intent_goal.raw_text = raw_text
-        intent_goal.flowed_intents = []
+        intent_goal.flowed_intents = self.flowed_intents
 
         self.action_controller.send_goal(intent_goal)
         rospy.loginfo('Goal sent')

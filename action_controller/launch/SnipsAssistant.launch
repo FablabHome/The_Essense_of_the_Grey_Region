@@ -13,4 +13,11 @@
         <param name="engine_path" type="str" value="$(arg engine_path)"/>
         <param name="config_file" type="str" value="$(arg config_file)"/>
     </node>
+    <node
+            name="snips_intent_ac"
+            pkg="action_controller"
+            type="SnipsActionControllerNode.py"
+            required="true"
+            output="screen"
+    />
 </launch>
