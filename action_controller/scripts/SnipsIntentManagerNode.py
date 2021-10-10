@@ -137,16 +137,15 @@ class SnipsIntentManager(Node):
 
         intent = parse_result.user_intent
         slots = parse_result.parsed_slots
-
-        if intent is None:
-            rospy.logwarn(f"Text '{raw_text}' doesn't match any intents")
-            intent = 'NotRecognized'
-
         self.current_intent = intent
 
         # Show the report
         rospy.loginfo(f"Text '{raw_text}' successfully parsed, parsing result:")
         self.__show_nlu_report(intent, slots)
+
+        if intent is None:
+            rospy.logwarn(f"Text '{raw_text}' doesn't match any intents")
+            intent = 'NotRecognized'
 
         # Ignore the intent if it was in the blacklist
         if intent in self.intent_blacklist:

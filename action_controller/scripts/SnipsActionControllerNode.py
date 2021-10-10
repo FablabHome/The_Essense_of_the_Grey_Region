@@ -32,6 +32,7 @@ from home_robot_msgs.srv import StartFlow, StartFlowRequest
 from std_srvs.srv import Trigger
 
 from core.Nodes import Node
+from core.tools import Speaker
 
 
 def dummy_callback(intent, slots, raw_text, flowed_intents):
@@ -54,6 +55,9 @@ class SnipsActionControllerNode(Node):
         # Call the start and stop flow service
         self.__start_flow = rospy.ServiceProxy('/snips_intent_manager/start_flow', StartFlow)
         self.stop_flow = rospy.ServiceProxy('/snips_intent_manager/stop_flow', Trigger)
+
+        # Initialize the speaker
+        self.speaker = Speaker()
 
         # Initialize the action server
         self.action_controller_server = actionlib.SimpleActionServer(
@@ -91,15 +95,14 @@ class SnipsActionControllerNode(Node):
         req.next_intents = next_intents
         self.__start_flow(req)
 
-    @staticmethod
-    def __introduce(intent, slots, raw_text, flowed_intents):
+    def __introduce(self, intent, slots, raw_text, flowed_intents):
         introduce_dialog = '''
         Ah, Forgive me for not introducing myself, masters.
         I'm snippy, your virtual assistant in this restaurant,
         I'm still under development, so you could only see me talking
         right now.
         '''
-        print(introduce_dialog)
+        self.speaker.say_until_end(introduce_dialog)
 
     @staticmethod
     def __show_menu(intent, slots, raw_text, flowed_intents):
@@ -147,16 +150,17 @@ class SnipsActionControllerNode(Node):
                 orders[slots[i]['value']['value']] = 1
                 i += 1
 
-        if order_what:
-            print('Order what?')
+        if order_what or len(slots) == 0:
+            self.speaker.say_until_end("I'm sorry, but could you repeat it again?")
             self.start_flow(next_intents=['OrderFood', 'NotRecognized'])
+            return
 
         if len(flowed_intents) > 0:
-            if flowed_intents == ['OrderFood', 'OrderFood']:
+            if set(flowed_intents) == {'OrderFood'}:
                 if not order_what:
-                    print('Ok')
                     self.stop_flow()
 
+        self.speaker.say_until_end('Ok, Gotcha')
         print(orders)
 
     def __not_recognized(self, intent, slots, raw_text, flowed_intents):
