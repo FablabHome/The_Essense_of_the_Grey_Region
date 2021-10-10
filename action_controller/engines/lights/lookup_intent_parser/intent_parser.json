@@ -1,0 +1,127 @@
+{
+  "config": {
+    "ignore_stop_words": true,
+    "unit_name": "lookup_intent_parser"
+  },
+  "entity_scopes": [
+    {
+      "entity_scope": {
+        "builtin": [],
+        "custom": [
+          "room",
+          "color"
+        ]
+      },
+      "intent_group": [
+        "setLightColor"
+      ]
+    },
+    {
+      "entity_scope": {
+        "builtin": [],
+        "custom": [
+          "room"
+        ]
+      },
+      "intent_group": [
+        "turnLightOff",
+        "turnLightOn"
+      ]
+    }
+  ],
+  "intents_names": [
+    "setLightColor",
+    "turnLightOff",
+    "turnLightOn"
+  ],
+  "language_code": "en",
+  "map": {
+    "-1508796664": [
+      0,
+      [
+        0
+      ]
+    ],
+    "-838971212": [
+      1,
+      [
+        0
+      ]
+    ],
+    "-241165242": [
+      1,
+      [
+        0
+      ]
+    ],
+    "-196823244": [
+      2,
+      [
+        0
+      ]
+    ],
+    "-171639413": [
+      1,
+      [
+        0
+      ]
+    ],
+    "641679088": [
+      2,
+      [
+        0
+      ]
+    ],
+    "765785596": [
+      0,
+      [
+        1,
+        0
+      ]
+    ],
+    "921048566": [
+      0,
+      [
+        0,
+        1
+      ]
+    ],
+    "1040610241": [
+      2,
+      [
+        0
+      ]
+    ],
+    "1653377737": [
+      2,
+      [
+        0
+      ]
+    ],
+    "1701771643": [
+      0,
+      [
+        1,
+        0
+      ]
+    ],
+    "1951260346": [
+      0,
+      [
+        0,
+        1
+      ]
+    ],
+    "1961251813": [
+      1,
+      [
+        0
+      ]
+    ]
+  },
+  "slots_names": [
+    "room",
+    "color"
+  ],
+  "stop_words_whitelist": {}
+}
