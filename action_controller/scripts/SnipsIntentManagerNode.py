@@ -166,6 +166,7 @@ class SnipsIntentManager(Node):
         if self.is_flowing:
             if intent in self.possible_next_intents:
                 self.flowed_intents.append(intent)
+                self.flowed_intents.remove(intent)
             else:
                 self.stop_flow_cb(None)
 
