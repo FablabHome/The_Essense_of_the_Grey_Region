@@ -31,27 +31,46 @@ class SnipsActionControllerNode(ActionEvaluator):
     def __init__(self):
         # Initialize the intent to callback map, must have NotRecognized situation
         self.intent2callback = {
-            'turnLightOn': self.__turnlightson,
-            'setLightColor': self.__setcolor,
+            'turnLightOn': self.__turnlighton,
+            'turnLightOff': self.__turnlightoff,
+            'setLightColor': self.__setlightcolor,
             'NotRecognized': self.__notrecognized
         }
 
         super(SnipsActionControllerNode, self).__init__()
 
-    def __turnlightson(self, intent, slots, raw_text, flowed_intents):
+    def __turnlightoff(self, intent, slots, raw_text, flowed_intents):
+        room = None
+        if len(slots) == 0:
+            self.speaker.say_until_end("OK, but which room?")
+            self.start_flow(next_intents=['turnLightOff'])
+            return
+        else:
+            room = slots[0]['value']['value']
+
+        if len(flowed_intents) > 0:
+            if flowed_intents[len(flowed_intents) - 2] == 'turnLightOff':
+                self.stop_flow()
+
+        self.speaker.say_until_end(f"Ok, the {room} was off light now")
+
+    def __turnlighton(self, intent, slots, raw_text, flowed_intents):
         room = None
         if len(slots) == 0:
             self.speaker.say_until_end("OK, but which room?")
             self.start_flow(next_intents=['turnLightOn'])
             return
-
-        if flowed_intents[len(flowed_intents) - 1] == 'turnLightOn':
+        else:
             room = slots[0]['value']['value']
 
-        self.speaker.say_until_end(f"Ok, let's light up the {room}, you can set the color or the intensity")
-        self.start_flow(next_intents=['setLightColor'])
+        if len(flowed_intents) > 0:
+            if flowed_intents[len(flowed_intents) - 2] == 'turnLightOn':
+                self.stop_flow()
 
-    def __setcolor(self, intent, slots, raw_text, flowed_intents):
+        self.speaker.say_until_end(f"Ok, let's light up the {room}, you can set the color or the intensity")
+        self.start_flow(next_intents=['setLightColor', 'NotRecognized'])
+
+    def __setlightcolor(self, intent, slots, raw_text, flowed_intents):
         if len(flowed_intents) == 0:
             self.speaker.say_until_end("Ok settings the lights color")
 
@@ -62,8 +81,9 @@ class SnipsActionControllerNode(ActionEvaluator):
     def __notrecognized(self, intent, slots, raw_text, flowed_intents):
         if len(flowed_intents) == 0:
             self.speaker.say_until_end("Sorry, I don't understand that")
-        elif flowed_intents[0] == 'turnLightsOn':
-            self.speaker.say_until_end("Sorry, as you don't want to do more")
+        elif flowed_intents[len(flowed_intents) - 2] == 'turnLightOn':
+            self.speaker.say_until_end("Sorry for bothering, as you don't want to do more")
+            self.stop_flow()
 
     def main(self):
         pass
