@@ -11,25 +11,25 @@ def callback(box: ObjectBoxes):
     global bridge, srcframe
     srcframe = bridge.compressed_imgmsg_to_cv2(box.source_img)
 
-
-def bb_intersection_over_union(boxA, boxB):
-    # determine the (x, y)-coordinates of the intersection rectangle
-    xA = max(boxA[0], boxB[0])
-    yA = max(boxA[1], boxB[1])
-    xB = min(boxA[2], boxB[2])
-    yB = min(boxA[3], boxB[3])
-    # compute the area of intersection rectangle
-    interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
-    # compute the area of both the prediction and ground-truth
-    # rectangles
-    boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
-    boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
-    # compute the intersection over union by taking the intersection
-    # area and dividing it by the sum of prediction + ground-truth
-    # areas - the interesection area
-    iou = interArea / float(boxAArea + boxBArea - interArea)
-    # return the intersection over union value
-    return iou
+# #
+# def bb_intersection_over_union(boxA, boxB):
+#     # determine the (x, y)-coordinates of the intersection rectangle
+#     xA = max(boxA[0], boxB[0])
+#     yA = max(boxA[1], boxB[1])
+#     xB = min(boxA[2], boxB[2])
+#     yB = min(boxA[3], boxB[3])
+#     # compute the area of intersection rectangle
+#     interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+#     # compute the area of both the prediction and ground-truth
+#     # rectangles
+#     boxAArea = (boxA[2] - boxA[0] + 1) * (boxA[3] - boxA[1] + 1)
+#     boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
+#     # compute the intersection over union by taking the intersection
+#     # area and dividing it by the sum of prediction + ground-truth
+#     # areas - the interesection area
+#     iou = interArea / float(boxAArea + boxBArea - interArea)
+#     # return the intersection over union value
+#     return iou
 
 
 def dist(point1, point2):
@@ -38,19 +38,16 @@ def dist(point1, point2):
     return np.sqrt((x_distance ** 2) + (y_distance ** 2))
 
 
+rospy.init_node('test_object_trackers')
 initialized = False
 tracker = dlib.correlation_tracker()
 srcframe = None
 bridge = CvBridge()
 
-tracker_iou_scores = []
-person_iou_scores = []
-
-tracker_centroid_dists = []
-person_centroid_dists = []
+lost_timeout = rospy.Duration(1.5)
+last_time = rospy.get_rostime()
 
 if __name__ == '__main__':
-    rospy.init_node('test_object_trackers')
     rospy.Subscriber(
         '/YD/boxes',
         ObjectBoxes,
@@ -59,6 +56,10 @@ if __name__ == '__main__':
     )
     init_box = rospy.wait_for_message('/pf_initializer/init_box', ObjectBox, timeout=120)
     tracker.start_track(srcframe, dlib.rectangle(init_box.x1, init_box.y1, init_box.x2, init_box.y2))
+
+    start_time = rospy.get_rostime()
+
+    timeout = rospy.get_rostime() + lost_timeout
 
     while not rospy.is_shutdown():
         if srcframe is None:
@@ -74,7 +75,7 @@ if __name__ == '__main__':
         y1 = int(pos.top())
         x2 = int(pos.right())
         y2 = int(pos.bottom())
-        centroid = (x2 - x1) // 2 + x1, (y2 - y1) // 2 + y1
+        cx, cy = (x2 - x1) // 2 + x1, (y2 - y1) // 2 + y1
 
         tx1 = true_box.x1
         ty1 = true_box.y1
@@ -86,37 +87,25 @@ if __name__ == '__main__':
         cv.rectangle(frame, (tx1, ty1), (tx2, ty2), (0, 255, 0), 15)
         cv.rectangle(frame, (tx1, ty1), (tx2, ty2), (255, 0, 0), 3)
 
-        iou_score = bb_intersection_over_union((x1, y1, x2, y2), (tx1, ty1, tx2, ty2))
-        rospy.loginfo(iou_score)
+        is_x1 = cx - tx1 >= 0
+        is_y1 = cy - ty1 >= 0
+        is_x2 = cx - tx2 <= 0
+        is_y2 = cy - ty2 <= 0
 
-        tracker_iou_scores.append(iou_score)
-        person_iou_scores.append(1)
-
-        tracker_centroid_dists.append(dist(gt_centroid, centroid))
-        person_centroid_dists.append(0)
+        if rospy.get_param('/person_follower/state') == 'NORMAL':
+            if not (is_x1 and is_y1 and is_x2 and is_y2):
+                if rospy.get_rostime() - timeout >= rospy.Duration(0):
+                    break
+        else:
+            timeout = rospy.get_rostime() + lost_timeout
 
         cv.imshow('hi', frame)
         key = cv.waitKey(1)
         if key in [27, ord('q')]:
             break
 
+    end_time = rospy.get_rostime()
     cv.destroyAllWindows()
-    plt.title('IOU score between gt box')
-    axes = plt.gca()
-    axes.set_ylim([0.0, 1.])
-    plt.plot(tracker_iou_scores, label='Dlib Tracker')
-    arr = np.array(person_iou_scores)
-    noise = np.random.normal(0, .01, arr.shape)
-    new_arr = arr + noise
-    plt.plot(new_arr, label='YOLO + Person Re-identification')
-    plt.legend(loc='upper right')
-    plt.show()
 
-    plt.title('Distance between gt centroid')
-    plt.plot(tracker_centroid_dists, label='Dlib Tracker')
-    arr = np.array(person_centroid_dists)
-    noise = np.random.normal(0, .01, arr.shape)
-    new_arr = arr + noise
-    plt.plot(new_arr, label='YOLO + Person Re-identification')
-    plt.legend(loc='upper right')
-    plt.show()
+    elapsed_time = end_time - start_time
+    rospy.loginfo(f'Survived: {elapsed_time.secs + elapsed_time.nsecs / 1e+9}')
