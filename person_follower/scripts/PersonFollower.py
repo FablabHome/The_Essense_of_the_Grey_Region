@@ -210,9 +210,10 @@ class PersonFollower(Node):
             if not self.initialized:
                 continue
 
-            srcframe = self.rgb_image.copy()
-            if srcframe is None:
+            if self.rgb_image is None:
                 continue
+
+            srcframe = self.rgb_image.copy()
 
             self.distance_and_boxes = {}
             # Update self.last_box only if the target_box was confirmed
