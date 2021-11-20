@@ -106,11 +106,12 @@ class SnipsIntentManager(Node):
         self.main()
 
     def start_flow_cb(self, req: StartFlowRequest):
-        self.is_flowing = True
-        self.flowed_intents.append(self.current_intent)
-        self.possible_next_intents = req.next_intents
-        self.s2t_start_flow()
-        return StartFlowResponse(True)
+        if not self.is_flowing:
+            self.is_flowing = True
+            self.flowed_intents.append(self.current_intent)
+            self.possible_next_intents = req.next_intents
+            self.s2t_start_flow()
+        return StartFlowResponse(self.is_flowing)
 
     def stop_flow_cb(self, req):
         self.is_flowing = False
