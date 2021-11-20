@@ -58,16 +58,14 @@ class PersonFollower(Node):
     WAYPOINT_THICKNESS = 2  # If thickness is -1 than the circle will be filled
 
     # The duration of person reid if the state was LOST
-    PERSON_REID_DURATION = 1
+    PERSON_REID_DURATION = 0.5
 
     def __init__(self):
         super(PersonFollower, self).__init__('person_follower', anonymous=False)
 
         bin_path = rospy.get_param('~bin_path')
         xml_path = rospy.get_param('~xml_path')
-
-        net = cv.dnn.readNet(bin_path, xml_path)
-        self.person_desc_extractor = PersonReidentification(net)
+        self.person_reid = PersonReidentification(bin_path, xml_path)
 
         self.bridge = CvBridge()
 
@@ -163,8 +161,8 @@ class PersonFollower(Node):
 
     def box_callback(self, detections: ObjectBoxes):
         if self.initialized:
-            self.detection_boxes = detections.boxes
-            # max_distance = 0
+            self.detection_boxes = BBox.from_ObjectBoxes(detections)
+            self.detection_boxes = list(filter(lambda b: b.label.strip() == 'person', self.detection_boxes))
 
             self.rgb_image = self.bridge.compressed_imgmsg_to_cv2(detections.source_img)
             H, W, _ = self.rgb_image.shape
@@ -179,10 +177,6 @@ class PersonFollower(Node):
     @staticmethod
     def __similarity_lt(similarity):
         return similarity > PersonFollower.SIMIL_ERROR
-
-    @staticmethod
-    def __compare_descriptor(desc1, desc2):
-        return np.dot(desc1, desc2) / (np.linalg.norm(desc1) * np.linalg.norm(desc2))
 
     @staticmethod
     def __draw_box_and_centroid(image, box, color, thickness, radius):
@@ -223,16 +217,13 @@ class PersonFollower(Node):
 
             self.recognized = False
 
-            for det_box in self.detection_boxes:
-                # Unpack the source image
-                source_img = self.bridge.compressed_imgmsg_to_cv2(det_box.source_img)
-                # Ignore detections which was not person
-                if det_box.label.strip() != 'person':
-                    continue
+            # Copy the detection boxes out for safety
+            current_detection_boxes = copy(self.detection_boxes)
 
-                person_box = BBox(det_box.x1, det_box.y1, det_box.x2, det_box.y2, label='person',
-                                  score=det_box.score,
-                                  source_img=source_img)
+            for person_box in current_detection_boxes:
+                # Ignore detections which was not person
+                if person_box.label != 'person':
+                    continue
 
                 # Draw the box in red as the base layer
                 self.__draw_box_and_centroid(srcframe, person_box, (32, 0, 255), 3, 3)
@@ -242,19 +233,15 @@ class PersonFollower(Node):
                     dist_between_target = self.last_box.calc_distance_between_point(person_box.centroid)
                     self.distance_and_boxes.update({dist_between_target: person_box})
 
-                current_descriptor = self.person_desc_extractor.parse_descriptor(source_img, crop=False)
+                current_descriptor = self.person_reid.extract_descriptor(person_box.source_img, crop=False)
 
                 # Compare the similarity
-                front_similarity = self.__compare_descriptor(current_descriptor, self.front_descriptor)
-                back_similarity = self.__compare_descriptor(current_descriptor, self.back_descriptor)
+                front_similarity = self.person_reid.compare_descriptors(current_descriptor, self.front_descriptor)
+                back_similarity = self.person_reid.compare_descriptors(current_descriptor, self.back_descriptor)
                 # rospy.loginfo(f'{front_similarity},{back_similarity}')
 
                 if (self.__similarity_lt(front_similarity) or self.__similarity_lt(
                         back_similarity)) and not self.recognized:
-                    # cv.imshow('matched_front', matched_front)
-                    # cv.imshow('matched_back', matched_back)
-                    # cv.imshow('front_img', self.front_img)
-
                     # Append the status queue
                     self.status_queue.append(True)
                     self.recognized = True
@@ -264,6 +251,8 @@ class PersonFollower(Node):
                         if not all(self.status_queue):
                             self.__draw_box_and_centroid(srcframe, person_box, (255, 255, 0), 5, 5)
                             continue
+                        PersonFollower.STATE = 'NORMAL'
+                    elif PersonFollower.STATE == 'SEARCHING':
                         PersonFollower.STATE = 'NORMAL'
 
                     self.target_box = copy(person_box)
@@ -303,13 +292,6 @@ class PersonFollower(Node):
                     y1=self.target_box.y1,
                     x2=self.target_box.x2,
                     y2=self.target_box.y2
-                ))
-            else:
-                self.box_publisher.publish(ObjectBox(
-                    x1=self.last_box.x1,
-                    y1=self.last_box.y1,
-                    x2=self.last_box.x2,
-                    y2=self.last_box.y2
                 ))
 
             # Draw the waypoints when param 'toggle_waypoint_animation' is True
