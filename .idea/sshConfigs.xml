@@ -5,6 +5,8 @@
       <sshConfig authType="PASSWORD" host="192.168.50.34" id="95a4ca93-a755-428a-ab69-ade3b3d51eb6" port="22" customName="Robi" nameFormat="CUSTOM" username="pcms">
         <option name="customName" value="Robi" />
       </sshConfig>
+      <sshConfig authType="PASSWORD" host="std.puiching.edu.mo" id="6b2426c2-5909-4fc6-99a3-e7db183f2f51" port="22" nameFormat="DESCRIPTIVE" username="0967520-5" />
+      <sshConfig authType="PASSWORD" host="std.puiching.edu.mo" id="15da8bb4-5485-44e7-a73e-37afdab8ed0e" port="22" nameFormat="DESCRIPTIVE" username="0967622-8" />
     </configs>
   </component>
 </project>
