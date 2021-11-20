@@ -29,14 +29,13 @@ import rospy
 from cv_bridge import CvBridge
 from home_robot_msgs.msg import ObjectBoxes, ObjectBox
 from home_robot_msgs.srv import PFInitializer, PFInitializerRequest
-from mr_voice.srv import SpeakerSrv
 from sensor_msgs.msg import CompressedImage
-from std_msgs.msg import String
-from std_srvs.srv import SetBoolRequest, Trigger, TriggerResponse, TriggerRequest
+from std_srvs.srv import Trigger, TriggerResponse, TriggerRequest
 
 from core.Detection import PersonReidentification
 from core.Dtypes import BBox
 from core.Nodes import Node
+from core.tools import Speaker
 
 
 class PFInitialize(Node):
@@ -50,8 +49,9 @@ class PFInitialize(Node):
 
         bin_path = rospy.get_param('~bin_path')
         xml_path = rospy.get_param('~xml_path')
-        net = cv.dnn.readNet(bin_path, xml_path)
-        self.person_desc_extractor = PersonReidentification(net)
+        self.person_desc_extractor = PersonReidentification(bin_path, xml_path)
+
+        self.speaker = Speaker()
 
         self.rgb_image = None
         self.is_running = False
@@ -60,12 +60,6 @@ class PFInitialize(Node):
 
         # Reset Service
         rospy.Service('pf_init_reset', Trigger, self.reset_callback)
-
-        self.speaker_pub = rospy.Publisher(
-            '/speaker/text',
-            String,
-            queue_size=1
-        )
 
         self.image_publisher = rospy.Publisher(
             '/PF/drown_image',
@@ -85,7 +79,6 @@ class PFInitialize(Node):
             self.yolo_boxes_callback,
             queue_size=1
         )
-        self.speaker_srv = rospy.ServiceProxy('/speaker/text', SpeakerSrv)
         self.call_person_follower = rospy.ServiceProxy('pf_initialize', PFInitializer)
         rospy.set_param('~initialized', False)
 
@@ -135,10 +128,10 @@ class PFInitialize(Node):
                 x2=self.init_box.x2,
                 y2=self.init_box.y2
             ))
-            # self.speaker_srv('Please let me see your back in 3 seconds')
+            self.speaker.say_until_end('Please let me see your back in 3 seconds')
             front_image = inside_init_box[0].source_img
             serialized_front_img = self.bridge.cv2_to_compressed_imgmsg(front_image)
-            front_descriptor = self.person_desc_extractor.parse_descriptor(front_image)
+            front_descriptor = self.person_desc_extractor.extract_descriptor(front_image)
             front_descriptor = front_descriptor[0].tolist()
 
             timeout = rospy.get_rostime() + init_timeout
@@ -166,7 +159,7 @@ class PFInitialize(Node):
 
             back_image = inside_init_box[0].source_img
             serialized_back_img = self.bridge.cv2_to_compressed_imgmsg(back_image)
-            back_descriptor = self.person_desc_extractor.parse_descriptor(back_image)
+            back_descriptor = self.person_desc_extractor.extract_descriptor(back_image)
             back_descriptor = back_descriptor[0].tolist()
 
             request_srv = PFInitializerRequest()
@@ -177,7 +170,7 @@ class PFInitialize(Node):
 
             self.call_person_follower(request_srv)
             rospy.set_param('~initialized', True)
-            # self.speaker_srv("I've remembered you, you can start walking")
+            self.speaker.say_until_end("I've remembered you, you can start walking")
 
             self.is_running = False
             cv.destroyAllWindows()
