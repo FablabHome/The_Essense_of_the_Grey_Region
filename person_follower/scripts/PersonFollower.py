@@ -24,14 +24,14 @@ SOFTWARE.
 
 """
 
-from collections import deque
-from copy import copy
+from copy import copy, deepcopy
+from typing import List
 
 import cv2 as cv
 import numpy as np
 import rospy
 from cv_bridge import CvBridge
-from home_robot_msgs.msg import ObjectBoxes, PFRobotData, PFWaypoints, ObjectBox
+from home_robot_msgs.msg import ObjectBoxes, ObjectBox
 from home_robot_msgs.srv import PFInitializer, PFInitializerRequest, PFInitializerResponse, ResetPF, ResetPFRequest
 from sensor_msgs.msg import CompressedImage
 from std_srvs.srv import Trigger
@@ -48,17 +48,16 @@ class PersonFollower(Node):
     CENTROID = (W // 2, H // 2)
 
     SIMIL_ERROR = 0.55
-    STATE = 'NORMAL'  # SEARCHING, LOST
+    STATE = 'NORMAL'  # CONFIRM_LOST, LOST, CONFIRM_REIDENTIFIED
 
     # Timeouts
-    LOST_TIMEOUT = rospy.Duration(1.5)
+    CONFIRM_LOST_TIMEOUT = rospy.Duration(1.5)
+    CONFIRM_REIDENTIFIED_TIMEOUT = rospy.Duration(0.5)
 
-    # Waypoint maximize size and thickness
-    WAYPOINT_MAX_RADIUS = 12
-    WAYPOINT_THICKNESS = 2  # If thickness is -1 than the circle will be filled
+    # Threshold for the system to determine if a box was a close box
+    CLOSE_BOX_IOU_THRESHOLD = 0.83
 
-    # The duration of person reid if the state was LOST
-    PERSON_REID_DURATION = 0.5
+    SEARCH_BOX_PADDING = (25, 25)
 
     def __init__(self):
         super(PersonFollower, self).__init__('person_follower', anonymous=False)
@@ -70,19 +69,11 @@ class PersonFollower(Node):
         self.bridge = CvBridge()
 
         self.front_descriptor = self.back_descriptor = None
-        self.target_box = self.last_box = self.tmp_box = None
+        self.target_box = self.last_detected_box = None
         self.rgb_image = None
         self.front_img = self.back_img = None
 
         self.detection_boxes = []
-        self.distance_and_boxes = {}
-        self.waypoints = []
-
-        # Record the statuses for re-identification
-        q_len = PersonFollower.PERSON_REID_DURATION / (1 / Node.ROS_RATE)
-        self.status_queue = deque([True], maxlen=int(q_len))
-        # This variable is to monitor if the target is recognized in that loop
-        self.recognized = False
 
         # Initialization host building
         self.initialized = False
@@ -95,21 +86,23 @@ class PersonFollower(Node):
         # Proxy of PFInitialize reset service
         self.reset_initializer = rospy.ServiceProxy('pf_init_reset', Trigger)
 
-        self.robot_handler_publisher = rospy.Publisher(
-            '/PFRHandler/pf_data',
-            PFRobotData,
+        # This publisher will only publish the box which the system was currently following
+        self.current_following_box_pub = rospy.Publisher(
+            '~formal_target_box',
+            ObjectBox,
             queue_size=1
+        )
+
+        # This publisher will publish the box whenever person re-id recognized the box
+        self.estimated_target_publisher = rospy.Publisher(
+            "~estimated_target_box",
+            ObjectBox,
+            queue_size=1,
         )
 
         self.image_publisher = rospy.Publisher(
             '/PF/drown_image',
             CompressedImage,
-            queue_size=1
-        )
-
-        self.box_publisher = rospy.Publisher(
-            '~target_box',
-            ObjectBox,
             queue_size=1
         )
 
@@ -120,17 +113,8 @@ class PersonFollower(Node):
             queue_size=1
         )
 
-        rospy.Subscriber(
-            '/record_waypoint/waypoints',
-            PFWaypoints,
-            self.waypoints_callback,
-            queue_size=1
-        )
-
-        rospy.set_param('~lost_target', False)
-        rospy.set_param('~toggle_waypoint_animation', True)
-        rospy.set_param('~waypoint_max_radius', PersonFollower.WAYPOINT_MAX_RADIUS)
-        rospy.set_param('~waypoint_thickness', PersonFollower.WAYPOINT_THICKNESS)
+        rospy.set_param('~initialized', False)
+        rospy.set_param("~state", '')
 
         self.main()
 
@@ -142,6 +126,7 @@ class PersonFollower(Node):
         self.back_img = self.bridge.compressed_imgmsg_to_cv2(req.back_img)
 
         self.initialized = True
+        rospy.set_param('~initialized', self.initialized)
         return PFInitializerResponse(True)
 
     def on_reset(self, req: ResetPFRequest):
@@ -170,35 +155,42 @@ class PersonFollower(Node):
             PersonFollower.W = W
             PersonFollower.CENTROID = (PersonFollower.W // 2, PersonFollower.H // 2)
 
-    def waypoints_callback(self, waypoints: PFWaypoints):
-        serialized_waypoints = waypoints.waypoints
-        self.waypoints = list(map(lambda w: w.waypoint, serialized_waypoints))
-
     @staticmethod
     def __similarity_lt(similarity):
         return similarity > PersonFollower.SIMIL_ERROR
 
+    def find_target_person(self, person_boxes: List[BBox]):
+        for person_box in person_boxes:
+            current_descriptor = self.person_reid.extract_descriptor(person_box.source_img, crop=False)
+
+            # Compare the descriptors
+            front_similarity = self.person_reid.compare_descriptors(current_descriptor, self.front_descriptor)
+            back_similarity = self.person_reid.compare_descriptors(current_descriptor, self.back_descriptor)
+
+            if self.__similarity_lt(front_similarity) or self.__similarity_lt(back_similarity):
+                return person_box
+        else:
+            return None
+
     @staticmethod
-    def __draw_box_and_centroid(image, box, color, thickness, radius):
-        box.draw(image, color, thickness)
-        box.draw_centroid(image, color, radius)
+    def find_tmp_person(search_box: BBox, person_boxes: List[BBox]):
+        for person_box in person_boxes:
+            if person_box.is_inBox(search_box):
+                return person_box
+        else:
+            return None
 
-    def __draw_waypoints(self, image, color):
-        if len(self.waypoints) == 0:
-            return
-
-        radius_increase = rospy.get_param('~waypoint_max_radius') / len(self.waypoints)
-        current_radius = 0
-        for waypoint in self.waypoints:
-            current_radius += radius_increase
-            cv.circle(image, waypoint, int(current_radius), color, rospy.get_param('~waypoint_thickness'))
+    @staticmethod
+    def find_overlapped_boxes(target_calc_box: BBox, person_boxes: List[BBox]):
+        return list(filter(
+            lambda b: b.iou_score_with(target_calc_box) >= PersonFollower.CLOSE_BOX_IOU_THRESHOLD,
+            person_boxes
+        ))
 
     def main(self):
         # Initialize the timeouts
-        lost_timeout = rospy.get_rostime() + PersonFollower.LOST_TIMEOUT
-
-        # Initialize the waypoint color
-        waypoint_color = (32, 255, 0)
+        confirm_lost_timeout = rospy.get_rostime() + PersonFollower.CONFIRM_LOST_TIMEOUT
+        confirm_reidentified_timeout = rospy.get_rostime() + PersonFollower.CONFIRM_REIDENTIFIED_TIMEOUT
 
         while not rospy.is_shutdown():
             if not self.initialized:
@@ -207,111 +199,77 @@ class PersonFollower(Node):
             if self.rgb_image is None:
                 continue
 
-            srcframe = self.rgb_image.copy()
-
-            self.distance_and_boxes = {}
             # Update self.last_box only if the target_box was confirmed
             if self.target_box is not None:
-                self.last_box = self.target_box
-            self.target_box = self.tmp_box = None
-
-            self.recognized = False
+                self.last_detected_box = deepcopy(self.target_box)
+            self.target_box = None
 
             # Copy the detection boxes out for safety
-            current_detection_boxes = copy(self.detection_boxes)
+            current_detection_boxes = deepcopy(self.detection_boxes)
 
-            for person_box in current_detection_boxes:
-                # Ignore detections which was not person
-                if person_box.label != 'person':
-                    continue
+            # Get the target boxes
+            self.target_box = self.find_target_person(current_detection_boxes)
+            current_following_box = BBox(label='unrecognized')
 
-                # Draw the box in red as the base layer
-                self.__draw_box_and_centroid(srcframe, person_box, (32, 0, 255), 3, 3)
-
-                # Calculate distances between the last existance of the target
-                if self.last_box is not None:
-                    dist_between_target = self.last_box.calc_distance_between_point(person_box.centroid)
-                    self.distance_and_boxes.update({dist_between_target: person_box})
-
-                current_descriptor = self.person_reid.extract_descriptor(person_box.source_img, crop=False)
-
-                # Compare the similarity
-                front_similarity = self.person_reid.compare_descriptors(current_descriptor, self.front_descriptor)
-                back_similarity = self.person_reid.compare_descriptors(current_descriptor, self.back_descriptor)
-                # rospy.loginfo(f'{front_similarity},{back_similarity}')
-
-                if (self.__similarity_lt(front_similarity) or self.__similarity_lt(
-                        back_similarity)) and not self.recognized:
-                    # Append the status queue
-                    self.status_queue.append(True)
-                    self.recognized = True
-
-                    # Confirmation with status queue if the state was LOST
-                    if PersonFollower.STATE == 'LOST':
-                        if not all(self.status_queue):
-                            self.__draw_box_and_centroid(srcframe, person_box, (255, 255, 0), 5, 5)
-                            continue
-                        PersonFollower.STATE = 'NORMAL'
-                    elif PersonFollower.STATE == 'SEARCHING':
-                        PersonFollower.STATE = 'NORMAL'
-
-                    self.target_box = copy(person_box)
-                    self.__draw_box_and_centroid(srcframe, self.target_box, (32, 255, 0), 9, 9)
-
-            msg = PFRobotData()
-            msg.follow_point = (-1, -1)
-
-            # Publishing data to the robot handler
-            if self.target_box is None:
+            if self.target_box:
+                # If the current state is NORMAL, publish the box out
                 if PersonFollower.STATE == 'NORMAL':
-                    PersonFollower.STATE = 'SEARCHING'
-                    lost_timeout = rospy.get_rostime() + PersonFollower.LOST_TIMEOUT
-                elif PersonFollower.STATE == 'SEARCHING':
-                    if rospy.get_rostime() - lost_timeout >= rospy.Duration(0):
-                        PersonFollower.STATE = 'LOST'
-                    else:
-                        # Follow the last exist box's centroid
-                        self.tmp_box = self.last_box
-                        msg.follow_point = self.tmp_box.centroid
-                        self.__draw_box_and_centroid(srcframe, self.tmp_box, (32, 255, 255), 5, 5)
-                        waypoint_color = (32, 255, 255)
+                    current_following_box = self.target_box
 
+                # If the current state is CONFIRM_LOST, then just jump
+                # back to NORMAL
+                elif PersonFollower.STATE == 'CONFIRM_LOST':
+                    PersonFollower.STATE = 'NORMAL'
+
+                # If the current state is LOST, then go into CONFIRM_REIDENTIFIED
                 elif PersonFollower.STATE == 'LOST':
-                    msg.follow_point = (-1, -1)
-                    if not self.recognized:
-                        self.status_queue.append(False)
+                    confirm_reidentified_timeout = rospy.get_rostime() + PersonFollower.CONFIRM_REIDENTIFIED_TIMEOUT
+                    PersonFollower.STATE = 'CONFIRM_REIDENTIFIED'
+
+                # If current state is CONFIRM_REIDENTIFIED, wait for the timeout
+                elif PersonFollower.STATE == 'CONFIRM_REIDENTIFIED':
+                    if rospy.get_rostime() - confirm_reidentified_timeout >= rospy.Duration(0):
+                        PersonFollower.STATE = 'NORMAL'
+
+                # Publish the estimated box without dealing with states
+                self.estimated_target_publisher.publish(self.target_box.serialize_as_ObjectBox())
             else:
-                msg.follow_point = self.target_box.centroid
-                waypoint_color = (32, 255, 0)
+                # If the program lost the target, get in CONFIRM_LOST to confirm
+                # if the target was truly lost
+                if PersonFollower.STATE == 'NORMAL':
+                    PersonFollower.STATE = 'CONFIRM_LOST'
+                    confirm_lost_timeout = rospy.get_rostime() + PersonFollower.CONFIRM_LOST_TIMEOUT
 
-            # Publish the data to the robot handler
-            self.robot_handler_publisher.publish(msg)
-            if self.target_box is not None:
-                self.box_publisher.publish(ObjectBox(
-                    x1=self.target_box.x1,
-                    y1=self.target_box.y1,
-                    x2=self.target_box.x2,
-                    y2=self.target_box.y2
-                ))
+                # If the program was confirming lost, then wait for the timeout
+                # follow a person which was in the padding_box of our person's last existent
+                elif PersonFollower.STATE == 'CONFIRM_LOST':
+                    # If the timeout has exceeded, then the program will consider the target
+                    # was truly lost
+                    if rospy.get_rostime() - confirm_lost_timeout >= rospy.Duration(0):
+                        PersonFollower.STATE = 'LOST'
 
-            # Draw the waypoints when param 'toggle_waypoint_animation' is True
-            if rospy.get_param('~toggle_waypoint_animation'):
-                self.__draw_waypoints(srcframe, waypoint_color)
+                    # Follow a temporarily person which is inside the
+                    # padding_box of the last_detected_box
+                    search_box = self.last_detected_box.generate_padding_box(
+                        padding=PersonFollower.SEARCH_BOX_PADDING,
+                        shape=(PersonFollower.H, PersonFollower.W)
+                    )
 
-            # drown_image = node.bridge.cv2_to_compressed_imgmsg(rgb_image)
-            # node.image_publisher.publish(drown_image)
+                    tmp_box = self.find_tmp_person(search_box, current_detection_boxes)
+                    if tmp_box:
+                        current_following_box = tmp_box
 
-            rospy.set_param('~state', PersonFollower.STATE)
+                # If the state was CONFIRM_REIDENTIFIED, it will just went back into LOST
+                elif PersonFollower.STATE == 'CONFIRM_REIDENTIFIED':
+                    PersonFollower.STATE = 'LOST'
 
-            frame = srcframe.copy()
-            cv.imshow('frame', frame)
-            key = cv.waitKey(1)
-            if key in [ord('q'), 27]:
-                break
+            # Set the current state
+            rospy.set_param("~state", PersonFollower.STATE)
+
+            # Publish the to-follow box to the PFRobotHandler
+            self.current_following_box_pub.publish(current_following_box.serialize_as_ObjectBox())
 
             self.rate.sleep()
-
-        cv.destroyAllWindows()
 
     def reset(self):
         self.detection_boxes = []
