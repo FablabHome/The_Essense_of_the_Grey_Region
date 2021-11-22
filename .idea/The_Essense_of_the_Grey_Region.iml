@@ -11,6 +11,7 @@
     <orderEntry type="library" name="workspace" level="project" />
     <orderEntry type="library" name="workspace" level="project" />
     <orderEntry type="library" name="workspace" level="project" />
+    <orderEntry type="module" module-name="mr_voice" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="format" value="GOOGLE" />
