@@ -24,6 +24,13 @@
         <param name="xml_path" type="str" value="$(arg xml_path)"/>
     </node>
     <node
+        name="pf_visualizer"
+        pkg="person_follower"
+        type="PFResultShower.py"
+        required="true"
+        output="screen"
+    />
+    <node
         name="waypoint_recorder"
         pkg="person_follower"
         type="WayPointRecorder.py"
