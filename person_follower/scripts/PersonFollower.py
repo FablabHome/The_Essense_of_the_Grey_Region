@@ -24,7 +24,7 @@ SOFTWARE.
 
 """
 
-from copy import copy, deepcopy
+from copy import deepcopy
 from typing import List
 
 import cv2 as cv
@@ -88,7 +88,7 @@ class PersonFollower(Node):
 
         # This publisher will only publish the box which the system was currently following
         self.current_following_box_pub = rospy.Publisher(
-            '~formal_target_box',
+            '~current_following_box',
             ObjectBox,
             queue_size=1
         )
