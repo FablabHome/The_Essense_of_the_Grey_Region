@@ -32,7 +32,6 @@ from home_robot_msgs.msg import ObjectBoxes, ObjectBox
 
 from core.Dtypes import BBox
 from core.Nodes import Node
-import message_filters
 
 
 class PFResultShower(Node):
@@ -60,6 +59,7 @@ class PFResultShower(Node):
             queue_size=1
         )
 
+        rospy.wait_for_message("/person_follower/estimated_target_box", ObjectBox)
         self.main()
 
     def box_callback(self, detections: ObjectBoxes):
@@ -79,14 +79,18 @@ class PFResultShower(Node):
         last_box = None
         while not rospy.is_shutdown():
             srcframe = self.rgb_image
-            if srcframe is None or not rospy.get_param('/person_follower/initialized'):
+            try:
+                current_state = rospy.get_param('/person_follower/state')
+            except KeyError:
+                current_state = 'NOT_INITIALIZED'
+
+            if srcframe is None or current_state == 'NOT_INITIALIZED':
                 continue
 
             frame = srcframe.copy()
 
             current_person_boxes = copy(self.detection_boxes)
             estimated_box = copy(self.estimated_box)
-            current_state = rospy.get_param('/person_follower/state')
 
             for person_box in current_person_boxes:
                 if person_box.iou_score_with(person_box) > PFResultShower.IOU_THRESHOLD and current_state == 'NORMAL':
