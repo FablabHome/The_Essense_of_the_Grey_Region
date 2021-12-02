@@ -27,7 +27,6 @@ SOFTWARE.
 from copy import deepcopy
 from typing import List
 
-import cv2 as cv
 import numpy as np
 import rospy
 from cv_bridge import CvBridge
@@ -42,21 +41,21 @@ from core.Nodes import Node
 
 
 class PersonFollower(Node):
-    # TODO: Separate the showing fragment to another node like ShowFaceResult
     H = 480
     W = 640
     CENTROID = (W // 2, H // 2)
 
     SIMIL_ERROR = 0.55
-    STATE = 'NORMAL'  # CONFIRM_LOST, LOST, CONFIRM_REIDENTIFIED
+    STATE = 'NOT_INITIALIZED'  # NORMAL, CONFIRM_LOST, LOST, CONFIRM_REIDENTIFIED
 
     # Timeouts
-    CONFIRM_LOST_TIMEOUT = rospy.Duration(1.5)
+    CONFIRM_LOST_TIMEOUT = rospy.Duration(0.5)
     CONFIRM_REIDENTIFIED_TIMEOUT = rospy.Duration(0.5)
 
     # Threshold for the system to determine if a box was a close box
     CLOSE_BOX_IOU_THRESHOLD = 0.83
 
+    NORMAL_BOX_PADDING = (35, 35)
     SEARCH_BOX_PADDING = (25, 25)
 
     def __init__(self):
@@ -69,14 +68,13 @@ class PersonFollower(Node):
         self.bridge = CvBridge()
 
         self.front_descriptor = self.back_descriptor = None
-        self.target_box = self.last_detected_box = None
+        self.estimated_target_box = self.last_estimated_box = None
         self.rgb_image = None
         self.front_img = self.back_img = None
 
         self.detection_boxes = []
 
         # Initialization host building
-        self.initialized = False
         rospy.Service('pf_initialize', PFInitializer, self.initialized_cb)
 
         # The reset service server
@@ -113,9 +111,7 @@ class PersonFollower(Node):
             queue_size=1
         )
 
-        rospy.set_param('~initialized', False)
-        rospy.set_param("~state", '')
-
+        rospy.set_param("~state", PersonFollower.STATE)
         self.main()
 
     def initialized_cb(self, req: PFInitializerRequest):
@@ -125,8 +121,9 @@ class PersonFollower(Node):
         self.front_img = self.bridge.compressed_imgmsg_to_cv2(req.front_img)
         self.back_img = self.bridge.compressed_imgmsg_to_cv2(req.back_img)
 
-        self.initialized = True
-        rospy.set_param('~initialized', self.initialized)
+        PersonFollower.STATE = 'NORMAL'
+        rospy.set_param('~state', PersonFollower.STATE)
+
         return PFInitializerResponse(True)
 
     def on_reset(self, req: ResetPFRequest):
@@ -145,7 +142,7 @@ class PersonFollower(Node):
             return False
 
     def box_callback(self, detections: ObjectBoxes):
-        if self.initialized:
+        if PersonFollower.STATE != 'NOT_INITIALIZED':
             self.detection_boxes = BBox.from_ObjectBoxes(detections)
             self.detection_boxes = list(filter(lambda b: b.label.strip() == 'person', self.detection_boxes))
 
@@ -193,28 +190,25 @@ class PersonFollower(Node):
         confirm_reidentified_timeout = rospy.get_rostime() + PersonFollower.CONFIRM_REIDENTIFIED_TIMEOUT
 
         while not rospy.is_shutdown():
-            if not self.initialized:
-                continue
-
-            if self.rgb_image is None:
+            if self.rgb_image is None or PersonFollower.STATE == 'NOT_INITIALIZED':
                 continue
 
             # Update self.last_box only if the target_box was confirmed
-            if self.target_box is not None:
-                self.last_detected_box = deepcopy(self.target_box)
-            self.target_box = None
+            if self.estimated_target_box is not None:
+                self.last_estimated_box = deepcopy(self.estimated_target_box)
+            self.estimated_target_box = None
 
             # Copy the detection boxes out for safety
             current_detection_boxes = deepcopy(self.detection_boxes)
 
             # Get the target boxes
-            self.target_box = self.find_target_person(current_detection_boxes)
+            self.estimated_target_box = self.find_target_person(current_detection_boxes)
             current_following_box = BBox(label='unrecognized')
 
-            if self.target_box:
+            if self.estimated_target_box:
                 # If the current state is NORMAL, publish the box out
                 if PersonFollower.STATE == 'NORMAL':
-                    current_following_box = self.target_box
+                    current_following_box = self.estimated_target_box
 
                 # If the current state is CONFIRM_LOST, then just jump
                 # back to NORMAL
@@ -232,7 +226,7 @@ class PersonFollower(Node):
                         PersonFollower.STATE = 'NORMAL'
 
                 # Publish the estimated box without dealing with states
-                self.estimated_target_publisher.publish(self.target_box.serialize_as_ObjectBox())
+                self.estimated_target_publisher.publish(self.estimated_target_box.serialize_as_ObjectBox())
             else:
                 # If the program lost the target, get in CONFIRM_LOST to confirm
                 # if the target was truly lost
@@ -250,7 +244,7 @@ class PersonFollower(Node):
 
                     # Follow a temporarily person which is inside the
                     # padding_box of the last_detected_box
-                    search_box = self.last_detected_box.generate_padding_box(
+                    search_box = self.last_estimated_box.generate_padding_box(
                         padding=PersonFollower.SEARCH_BOX_PADDING,
                         shape=(PersonFollower.H, PersonFollower.W)
                     )
@@ -273,9 +267,8 @@ class PersonFollower(Node):
 
     def reset(self):
         self.detection_boxes = []
-        self.initialized = False
+        PersonFollower.STATE = 'NOT_INITIALIZED'
         # self.front_descriptor = self.back_descriptor = None
-        cv.destroyAllWindows()
 
 
 if __name__ == '__main__':
