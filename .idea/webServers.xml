@@ -3,9 +3,9 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="3894aa81-97be-4c71-90e7-430e9e5f9e3a" name="Anchor">
-        <fileTransfer rootFolder="/home/0967520-5" accessType="SFTP" host="std.puiching.edu.mo" port="22" sshConfigId="6b2426c2-5909-4fc6-99a3-e7db183f2f51" sshConfig="0967520-5@std.puiching.edu.mo:22 password">
+        <fileTransfer rootFolder="/home/pcms/pcms_ros/src" accessType="SFTP" host="192.168.50.23" port="22" sshConfigId="5f50e089-9bc3-41f9-bb3e-795c10b0d4b5" sshConfig="Anchor">
           <advancedOptions>
-            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
         </fileTransfer>
       </webServer>
