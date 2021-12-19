@@ -23,128 +23,107 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 """
-import json
-import subprocess
-from os import path
 
 import rospy
-from home_robot_msgs.msg import CommandData
-from mr_voice.msg import Voice
-from std_msgs.msg import String
 
-from core.Nodes import Node
-from core.tools import Speaker
-from core.utils.KeywordParsers import NormalKeywordParser
+from core.Nodes import ActionEvaluator
 
 
-class ActionControllerNode(Node):
+class ActionControllerNode(ActionEvaluator):
     def __init__(self):
-        super(ActionControllerNode, self).__init__('acp', anonymous=False)
+        # Initialize the intent to callback map, must have NotRecognized situation
+        self.intent2callback = {
+            'Introduce': self.__introduce,
+            'GiveMenu': self.__show_menu,
+            'OrderFood': self.__order_food,
+            'OrderFoodTakeOut': self.__order_food,
+            'NotRecognized': self.__not_recognized
+        }
 
-        config = rospy.get_param('~config')
-        self.configs = json.load(open(config))
-        self.action_commands = rospy.get_param('~action_commands')
+        super(ActionControllerNode, self).__init__()
 
-        self.keyword_parser = NormalKeywordParser(self.configs)
-        # self.acp_program = ActionController(node_id='acp', config_file=config)
+    def __introduce(self, intent, slots, raw_text, flowed_intents):
+        introduce_dialog = '''
+        Ah, Forgive me for not introducing myself, masters.
+        I'm snippy, your virtual assistant in this restaurant,
+        I'm still under development, so you could only see me talking
+        right now.
+        '''
+        self.speaker.say_until_end(introduce_dialog)
 
-        self.result = CommandData()
+    @staticmethod
+    def __show_menu(intent, slots, raw_text, flowed_intents):
+        menu = '''
+        Menu                          Price
+        -------------------------------------
+        French Fries                    $7
+        meat salad                     $20
+        spaghetti                      $23
+        hot chocolate                  $14
+        cappucino                      $19
+        tea                             $0
+        water                           $0
+        Hamburger                      $19
+        Ketchup                         $0
+        Tacos                          $15
+        Marshmellos                    $10
+        Steak                          $27
+        hot dog                        $10
+        '''
+        print(f"Sorry for your inconvenience, here's the menu\n\n{menu}")
 
-        # Buffer of requests, as queue
-        self.buffer = []
+    def __order_food(self, intent, slots, raw_text, flowed_intents):
+        order_what = False
+        orders = {}
+        i = 0
+        while i < len(slots):
+            if slots[i]['slotName'] == 'amount':
+                amount = int(slots[i]['value']['value'])
+                try:
+                    next_slot = slots[i + 1]
+                    if next_slot['slotName'] == 'food':
+                        orders[next_slot['value']['value']] = amount
+                        i += 2
+                    elif next_slot['slotName'] == 'amount':
+                        orders[f'Unknown{i}'] = amount
+                        i += 1
+                        order_what = True
 
-        # Status of the ActionController
-        self.is_running = False
+                except IndexError:
+                    order_what = True
+                    orders[f'Unknown{i}'] = amount
+                    i += 1
+            elif slots[i]['slotName'] == 'food':
+                orders[slots[i]['value']['value']] = 1
+                i += 1
 
-        self.speaker = Speaker()
+        if order_what or len(slots) == 0:
+            self.speaker.say_until_end("I'm sorry, but could you repeat it again?")
+            self.start_session(next_intents=['OrderFood', 'NotRecognized'])
+            return
 
-        # Create result publisher
-        self.processed_result_publisher = rospy.Publisher(
-            '~processed_result',
-            CommandData,
-            queue_size=1
-        )
+        if len(flowed_intents) > 0:
+            if set(flowed_intents) == {'OrderFood'}:
+                if not order_what:
+                    self.stop_flow()
 
-        # # #
-        self.facial_pub = rospy.Publisher(
-            '/home_edu/facial',
-            String,
-            queue_size=0
-        )
+        self.speaker.say_until_end('Ok, Gotcha')
+        print(orders)
 
-        # Create Subscriber to subscribe for the text
-        self.recognized_text_subscriber = rospy.Subscriber(
-            '/voice/text',
-            Voice,
-            self._callback,
-            queue_size=1
-        )
-
-        rospy.set_param('~is_running', self.is_running)
-
-    def _callback(self, voice_data: Voice):
-        text = voice_data.text
-        # Append text into buffer
-        self.buffer.append(text)
-        # If Node is not running
-        if not self.is_running:
-            self.is_running = True
-            # Pop buffer from queue
-            while len(self.buffer) > 0:
-                text = self.buffer.pop(0)
-                # Get caller from _connection_header
-                caller = voice_data._connection_header['callerid']
-                rospy.loginfo(f'Processing request from {caller}')
-
-                meaning, response, actions = self.keyword_parser.parse(text)
-                self.speaker.say(response)
-
-                if len(actions) != 0:
-                    for action in actions:
-                        self.__run_action(action)
-
-                self.result.meaning = meaning
-                self.result.response = response
-                if not self.result.response != '':
-                    self.facial_pub.publish(f"crying:Current text <{text}> doesn't match anybody in config")
-                self.processed_result_publisher.publish(self.result)
-            self.is_running = False
-
-    def __run_action(self, action):
-        # Get the command and args
-        command, *args = action
-        path_command = path.join(self.action_commands, command) + '.py'
-
-        full_command = [path_command]
-        full_command.extend(args)
-
-        rospy.loginfo(f'Running action <{" ".join(action)}>')
-        command_status = subprocess.run(full_command, stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
-
-        # Decode the stdout
-        stdout = command_status.stdout.decode('ascii')
-        # Check the returncode
-        if command_status.returncode == 0:
-            # Return code 0 means program executed successfully
-            rospy.loginfo(f'Action <{" ".join(action)}> has run successfully')
-            if stdout != '':
-                rospy.loginfo(f'stdout: {stdout}')
-        else:
-            # If status code is not 0, which means action stopped unexpectedly
-            # Log the error
-            rospy.logerr(
-                f'Action <{" ".join(action)}> failed with exit code {command_status.returncode}')
-
-        return command_status.returncode
+    def __not_recognized(self, intent, slots, raw_text, flowed_intents):
+        if len(flowed_intents) == 0:
+            rospy.loginfo(f"Currently there isn't an action for '{raw_text}'")
+        elif flowed_intents[0] == 'OrderFood':
+            rospy.loginfo('Sorry, I could not understand what do you want to order, please say it again')
+            self.stop_flow()
 
     def main(self):
-        pass
+        while not rospy.is_shutdown():
+            self.rate.sleep()
 
     def reset(self):
-        self.result = CommandData()
+        pass
 
 
 if __name__ == '__main__':
-    ac_node = ActionControllerNode()
-    ac_node.spin()
+    node = ActionControllerNode()

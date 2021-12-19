@@ -38,13 +38,13 @@ from core.Nodes import Node
 from core.utils.KeywordParsers import HeySnipsNLUParser
 
 
-class SnipsIntentManager(Node):
+class IntentManager(Node):
     INTENT_DEFAULT_CONFIG = {
         'allow_preempt': False
     }
 
     def __init__(self):
-        super(SnipsIntentManager, self).__init__("snips_intent_manager", anonymous=False)
+        super(IntentManager, self).__init__("intent_manager", anonymous=False)
 
         # Base path of the configs
         base = RosPack().get_path('rcj_pcms_base') + '/../config/ActionController/SnipsIntentConfigs'
@@ -65,7 +65,7 @@ class SnipsIntentManager(Node):
 
         # Get the blacklist from boss
         rospy.Subscriber(
-            "/snips_intent_boss/blacklist",
+            "/intent_boss/blacklist",
             Blacklist,
             self.blacklist_cb,
             queue_size=1
@@ -82,7 +82,7 @@ class SnipsIntentManager(Node):
 
         # Create a instance to call the ActionController
         self.action_controller = actionlib.SimpleActionClient(
-            'snips_intent_ac',
+            'intent_ac',
             IntentACControllerAction
         )
 
@@ -158,10 +158,10 @@ class SnipsIntentManager(Node):
             intent_config = self.intent_configs[intent]
         except KeyError:
             rospy.logwarn(f"Intent {intent}'s config doesn't exist, using default")
-            intent_config = SnipsIntentManager.INTENT_DEFAULT_CONFIG
+            intent_config = IntentManager.INTENT_DEFAULT_CONFIG
 
         # Send the intent to the snips_intent_a c
-        rospy.loginfo('Sending intent to /snips_intent_ac')
+        rospy.loginfo('Sending intent to /intent_ac')
 
         # Record the intent if it was flowing
         if self.is_flowing:
@@ -219,4 +219,4 @@ class SnipsIntentManager(Node):
 
 
 if __name__ == '__main__':
-    node = SnipsIntentManager()
+    node = IntentManager()
