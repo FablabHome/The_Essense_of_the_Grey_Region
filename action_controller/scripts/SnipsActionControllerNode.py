@@ -99,7 +99,7 @@ class SnipsActionControllerNode(ActionEvaluator):
 
         if order_what or len(slots) == 0:
             self.speaker.say_until_end("I'm sorry, but could you repeat it again?")
-            self.start_flow(next_intents=['OrderFood', 'NotRecognized'])
+            self.start_session(next_intents=['OrderFood', 'NotRecognized'])
             return
 
         if len(flowed_intents) > 0:

@@ -30,7 +30,7 @@ import actionlib
 import rospy
 from home_robot_msgs.msg import IntentManagerAction, IntentManagerGoal, Blacklist, IntentACControllerAction, \
     IntentACControllerGoal, IntentManagerResult, IntentManagerFeedback
-from home_robot_msgs.srv import StartFlow, StartFlowRequest, StartFlowResponse
+from home_robot_msgs.srv import StartSession, StartSessionRequest, StartSessionResponse
 from rospkg import RosPack
 from std_srvs.srv import Trigger, TriggerResponse
 
@@ -71,14 +71,14 @@ class SnipsIntentManager(Node):
             queue_size=1
         )
 
-        # Create the flow request entry
-        rospy.Service('~start_flow', StartFlow, self.start_flow_cb)
-        # Create the stop flow entry
-        rospy.Service('~stop_flow', Trigger, self.stop_flow_cb)
+        # Create the session request entry
+        rospy.Service('~start_session', StartSession, self.start_flow_cb)
+        # Create the stop session entry
+        rospy.Service('~stop_session', Trigger, self.stop_flow_cb)
 
         # Calling the SpeechToText node to start flow
-        self.s2t_start_flow = rospy.ServiceProxy('/voice/start_flow', Trigger)
-        self.s2t_stop_flow = rospy.ServiceProxy('/voice/stop_flow', Trigger)
+        self.s2t_start_flow = rospy.ServiceProxy('/voice/start_session', Trigger)
+        self.s2t_stop_flow = rospy.ServiceProxy('/voice/stop_session', Trigger)
 
         # Create a instance to call the ActionController
         self.action_controller = actionlib.SimpleActionClient(
@@ -105,13 +105,13 @@ class SnipsIntentManager(Node):
 
         self.main()
 
-    def start_flow_cb(self, req: StartFlowRequest):
+    def start_flow_cb(self, req: StartSessionRequest):
         if not self.is_flowing:
             self.is_flowing = True
             self.flowed_intents.append(self.current_intent)
             self.possible_next_intents = req.next_intents
             self.s2t_start_flow()
-        return StartFlowResponse(self.is_flowing)
+        return StartSessionResponse(self.is_flowing)
 
     def stop_flow_cb(self, req):
         self.is_flowing = False
