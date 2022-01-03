@@ -23,6 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 """
+import json
 
 import rospy
 
@@ -42,7 +43,7 @@ class ActionControllerNode(ActionEvaluator):
 
         super(ActionControllerNode, self).__init__()
 
-    def __introduce(self, intent, slots, raw_text, flowed_intents):
+    def __introduce(self, intent, slots, raw_text, session):
         introduce_dialog = '''
         Ah, Forgive me for not introducing myself, masters.
         I'm snippy, your virtual assistant in this restaurant,
@@ -52,7 +53,7 @@ class ActionControllerNode(ActionEvaluator):
         self.speaker.say_until_end(introduce_dialog)
 
     @staticmethod
-    def __show_menu(intent, slots, raw_text, flowed_intents):
+    def __show_menu(intent, slots, raw_text, session):
         menu = '''
         Menu                          Price
         -------------------------------------
@@ -72,10 +73,12 @@ class ActionControllerNode(ActionEvaluator):
         '''
         print(f"Sorry for your inconvenience, here's the menu\n\n{menu}")
 
-    def __order_food(self, intent, slots, raw_text, flowed_intents):
+    def __order_food(self, intent, slots, raw_text, session):
         order_what = False
         orders = {}
         i = 0
+        if session is not None:
+            rospy.loginfo(json.loads(session.custom_data))
         while i < len(slots):
             if slots[i]['slotName'] == 'amount':
                 amount = int(slots[i]['value']['value'])
@@ -99,27 +102,23 @@ class ActionControllerNode(ActionEvaluator):
 
         if order_what or len(slots) == 0:
             self.speaker.say_until_end("I'm sorry, but could you repeat it again?")
-            self.start_session(next_intents=['OrderFood', 'NotRecognized'])
+            self.start_session(next_intents=['OrderFood', 'NotRecognized'], custom_data=orders)
             return
 
-        if len(flowed_intents) > 0:
-            if set(flowed_intents) == {'OrderFood'}:
+        if self.on_session():
+            if set(session.possible_next_intents) == {'OrderFood'}:
                 if not order_what:
-                    self.stop_flow()
+                    self.stop_session()
 
         self.speaker.say_until_end('Ok, Gotcha')
         print(orders)
 
-    def __not_recognized(self, intent, slots, raw_text, flowed_intents):
-        if len(flowed_intents) == 0:
+    def __not_recognized(self, intent, slots, raw_text, session):
+        if len(session) == 0:
             rospy.loginfo(f"Currently there isn't an action for '{raw_text}'")
-        elif flowed_intents[0] == 'OrderFood':
+        elif session[0] == 'OrderFood':
             rospy.loginfo('Sorry, I could not understand what do you want to order, please say it again')
-            self.stop_flow()
-
-    def main(self):
-        while not rospy.is_shutdown():
-            self.rate.sleep()
+            self.stop_session()
 
     def reset(self):
         pass
