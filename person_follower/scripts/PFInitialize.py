@@ -80,7 +80,7 @@ class PFInitialize(Node):
             queue_size=1
         )
         self.call_person_follower = rospy.ServiceProxy('pf_initialize', PFInitializer)
-        rospy.set_param('~initialized', False)
+        rospy.set_param('/person_follower/state', "NOT_INITIALIZED")
 
         self.bridge = CvBridge()
         self.init_box = self.__generate_initial_box()
