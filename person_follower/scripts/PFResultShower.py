@@ -102,7 +102,7 @@ class PFResultShower(Node):
             elif current_state == 'CONFIRM_REIDENTIFIED':
                 self.__draw_box_and_centroid(frame, estimated_box, (255, 255, 0), 5, 7)
             elif current_state == 'CONFIRM_LOST':
-                self.__draw_box_and_centroid(frame, last_box, (32, 255, 255), 5, 7)
+                self.__draw_box_and_centroid(frame, last_box, (0, 255, 255), 5, 7)
 
             cv.imshow('frame', frame)
             key = cv.waitKey(1) & 0xFF
@@ -112,6 +112,8 @@ class PFResultShower(Node):
             if estimated_box is not None:
                 last_box = copy(estimated_box)
             self.rate.sleep()
+
+        cv.destroyAllWindows()
 
     def reset(self):
         pass
