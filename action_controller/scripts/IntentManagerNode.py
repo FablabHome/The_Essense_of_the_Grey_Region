@@ -24,13 +24,14 @@ SOFTWARE.
 
 """
 import json
+from copy import copy
 from os import path
 
 import actionlib
 import rospy
 from home_robot_msgs.msg import IntentManagerAction, IntentManagerGoal, Blacklist, IntentACControllerAction, \
     IntentACControllerGoal, IntentManagerResult, IntentManagerFeedback
-from home_robot_msgs.srv import StartSession, StartSessionRequest, StartSessionResponse
+from home_robot_msgs.srv import Session, SessionRequest, SessionResponse
 from rospkg import RosPack
 from std_srvs.srv import Trigger, TriggerResponse
 
@@ -72,13 +73,15 @@ class IntentManager(Node):
         )
 
         # Create the session request entry
-        rospy.Service('~start_session', StartSession, self.start_flow_cb)
+        rospy.Service('~start_session', Session, self.start_session_cb)
+        # Create the continue session entry
+        rospy.Service('~continue_session', Session, self.continue_session_cb)
         # Create the stop session entry
-        rospy.Service('~stop_session', Trigger, self.stop_flow_cb)
+        rospy.Service('~stop_session', Trigger, self.stop_session_cb)
 
         # Calling the SpeechToText node to start flow
-        self.s2t_start_flow = rospy.ServiceProxy('/voice/start_session', Trigger)
-        self.s2t_stop_flow = rospy.ServiceProxy('/voice/stop_session', Trigger)
+        self.s2t_start_session = rospy.ServiceProxy('/voice/start_session', Trigger)
+        self.s2t_stop_session = rospy.ServiceProxy('/voice/stop_session', Trigger)
 
         # Create a instance to call the ActionController
         self.action_controller = actionlib.SimpleActionClient(
@@ -95,30 +98,49 @@ class IntentManager(Node):
         )
         self.manager_server.start()
 
-        # The flowing variables
-        self.is_flowing = False
-        self.flowed_intents = []
-        self.possible_next_intents = []
+        # session variables
+        self.session = None
+        rospy.set_param('~on_session', False)
 
         # The current intent
         self.current_intent = ''
 
+        # continue the session or not
+        self.start_session = False
+        self.continue_session = False
+
         self.main()
 
-    def start_flow_cb(self, req: StartSessionRequest):
-        if not self.is_flowing:
-            self.is_flowing = True
-            self.flowed_intents.append(self.current_intent)
-            self.possible_next_intents = req.next_intents
-            self.s2t_start_flow()
-        return StartSessionResponse(self.is_flowing)
+    @staticmethod
+    def __on_session():
+        return rospy.get_param('~on_session')
 
-    def stop_flow_cb(self, req):
-        self.is_flowing = False
-        self.flowed_intents = []
-        self.possible_next_intents = []
-        self.s2t_stop_flow()
-        return TriggerResponse(success=True, message="The flow has successfully stopped")
+    def __intent_in_next_intents(self, intent):
+        return intent in self.session.possible_next_intents and len(self.session.possible_next_intents) != 0
+
+    def __establish_session(self, session):
+        rospy.set_param('~on_session', True)
+        self.session = copy(session)
+        self.s2t_start_session()
+
+    def start_session_cb(self, req: SessionRequest):
+        if not self.__on_session():
+            self.start_session = True
+            self.__establish_session(req.session_data)
+        return SessionResponse()
+
+    def continue_session_cb(self, req: SessionRequest):
+        if self.__on_session():
+            self.continue_session = True
+            self.__establish_session(req.session_data)
+        return SessionResponse()
+
+    def stop_session_cb(self, req):
+        if self.__on_session():
+            rospy.set_param('~on_session', False)
+            self.session = None
+            self.s2t_stop_session()
+        return TriggerResponse()
 
     def blacklist_cb(self, blacklist: Blacklist):
         self.intent_blacklist = blacklist.blacklist
@@ -164,18 +186,19 @@ class IntentManager(Node):
         rospy.loginfo('Sending intent to /intent_ac')
 
         # Record the intent if it was flowing
-        if self.is_flowing:
-            if intent in self.possible_next_intents:
-                self.flowed_intents.append(intent)
-                self.flowed_intents.remove(intent)
+        if self.__on_session():
+            if self.__intent_in_next_intents(intent):
+                self.session.flowed_intents.append(intent)
             else:
-                self.stop_flow_cb(None)
+                self.stop_session_cb(None)
+                intent = "NotRecognized"
 
         intent_goal = IntentACControllerGoal()
         intent_goal.intent = intent
         intent_goal.slots = json.dumps(slots)
         intent_goal.raw_text = raw_text
-        intent_goal.flowed_intents = self.flowed_intents
+        if self.__on_session():
+            intent_goal.session = self.session
 
         self.action_controller.send_goal(intent_goal)
         rospy.loginfo('Goal sent')
@@ -194,6 +217,12 @@ class IntentManager(Node):
 
         result = IntentManagerResult(True)
         self.manager_server.set_succeeded(result, 'The intent was successfully handled')
+
+        if not (self.continue_session or self.start_session):
+            self.stop_session_cb(None)
+
+        self.start_session = False
+        self.continue_session = False
 
     @staticmethod
     def __show_nlu_report(intent, slots):
