@@ -134,3 +134,4 @@ dmypy.json
 /RCJ_pcms_base/scripts/tests/test.py
 /RCJ_pcms_base/test_videos/
 /action_controller/engines/
+/action_controller/datasets/
