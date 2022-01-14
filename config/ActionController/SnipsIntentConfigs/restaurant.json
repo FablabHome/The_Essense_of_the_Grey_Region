@@ -1,20 +1,26 @@
 {
-    "Introduce": {
-        "allow_preempt": true
+    "turnLightOn": {
+        "allow_preempt": false,
+        "required_slots": {
+            "room": {
+                "confirm_response": "Ok, but which room do you want to light up?"
+            }
+        }
     },
-    "GiveMenu": {
-        "allow_preempt": true
+    "turnLightOff": {
+        "allow_preempt": false,
+        "required_slots": {
+            "room": {
+                "confirm_response": "Ok, but which room do you want to light off?"
+            }
+        }
     },
-    "OrderFood": {
-        "allow_preempt": false
-    },
-    "OrderFoodTakeOut": {
-        "allow_preempt": false
-    },
-    "RemoveOrder": {
-        "allow_preempt": false
-    },
-    "PayTheBill": {
-        "allow_preempt": false
+    "setLightColor": {
+        "allow_preempt": false,
+        "required_slots": {
+            "color": {
+                "confirm_response": "Ok, but what color do you want?"
+            }
+        }
     }
 }

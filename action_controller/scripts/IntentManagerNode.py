@@ -25,7 +25,6 @@ SOFTWARE.
 """
 import json
 from copy import copy
-from os import path
 
 import actionlib
 import rospy
@@ -35,14 +34,14 @@ from home_robot_msgs.srv import Session, SessionRequest, SessionResponse
 from rospkg import RosPack
 from std_srvs.srv import Trigger, TriggerResponse
 
+from core.Dtypes import IntentConfig, Slots
 from core.Nodes import Node
+from core.tools import Speaker
 from core.utils.KeywordParsers import HeySnipsNLUParser
 
 
 class IntentManager(Node):
-    INTENT_DEFAULT_CONFIG = {
-        'allow_preempt': False
-    }
+    INTENT_DEFAULT_CONFIG = IntentConfig(allow_preempt=False, required_slots={})
 
     def __init__(self):
         super(IntentManager, self).__init__("intent_manager", anonymous=False)
@@ -51,8 +50,7 @@ class IntentManager(Node):
         base = RosPack().get_path('rcj_pcms_base') + '/../config/ActionController/SnipsIntentConfigs'
         # Load the intent configs
         config_file = rospy.get_param('~config_file')
-        with open(path.join(base, config_file)) as config:
-            self.intent_configs = json.load(config)
+        self.intent_configs = self.load_intent_configs(config_file)
 
         # Load the nlu engines
         engine_path = rospy.get_param('~engine_path')
@@ -60,6 +58,9 @@ class IntentManager(Node):
         self.nlu_engine = HeySnipsNLUParser(engine_configs={
             engine_name: engine_path
         })
+
+        # initialize the speaker
+        self.speaker = Speaker()
 
         # The Intent blacklist from boss
         self.intent_blacklist = []
@@ -101,6 +102,7 @@ class IntentManager(Node):
         # session variables
         self.session = None
         rospy.set_param('~on_session', False)
+        rospy.set_param('~insufficient_slot', False)
 
         # The current intent
         self.current_intent = ''
@@ -115,6 +117,22 @@ class IntentManager(Node):
     def __on_session():
         return rospy.get_param('~on_session')
 
+    @staticmethod
+    def __slots_insufficient(slots, intent_config):
+        for required_slot, data in intent_config.required_slots.items():
+            if not slots.slot_exist(required_slot):
+                return True, data['confirm_response']
+        return False, ''
+
+    @staticmethod
+    def load_intent_configs(config_path):
+        with open(config_path) as f:
+            intent_configs = json.load(f)
+        for key, json_data in intent_configs.items():
+            intent_configs[key] = IntentConfig(**json_data)
+
+        return intent_configs
+
     def __intent_in_next_intents(self, intent):
         return intent in self.session.possible_next_intents and len(self.session.possible_next_intents) != 0
 
@@ -122,6 +140,26 @@ class IntentManager(Node):
         rospy.set_param('~on_session', True)
         self.session = copy(session)
         self.s2t_start_session()
+
+    def __start_session(self, next_intents, custom_data=None):
+        req = SessionRequest()
+
+        if self.__on_session():
+            req = SessionRequest()
+            req.session_data.possible_next_intents = next_intents
+            req.session_data.custom_data = json.dumps(custom_data)
+            self.continue_session_cb(req)
+        else:
+            req.session_data.started_intent = self.current_intent
+            req.session_data.possible_next_intents = next_intents
+            if custom_data is not None:
+                req.session_data.custom_data = json.dumps(custom_data)
+            self.start_session_cb(req)
+
+    def __stop_session(self):
+        if not self.__on_session():
+            raise RuntimeError("There isn't a session started")
+        self.stop_session_cb(None)
 
     def start_session_cb(self, req: SessionRequest):
         if not self.__on_session():
@@ -159,12 +197,12 @@ class IntentManager(Node):
         parse_result = self.nlu_engine.parse(raw_text)
 
         intent = parse_result.user_intent
-        slots = parse_result.parsed_slots
+        slots = Slots(parse_result.parsed_slots)
         self.current_intent = intent
 
         # Show the report
         rospy.loginfo(f"Text '{raw_text}' successfully parsed, parsing result:")
-        self.__show_nlu_report(intent, slots)
+        self.__show_nlu_report(intent, slots.raw_slots)
 
         if intent is None:
             rospy.logwarn(f"Text '{raw_text}' doesn't match any intents")
@@ -182,10 +220,10 @@ class IntentManager(Node):
             rospy.logwarn(f"Intent {intent}'s config doesn't exist, using default")
             intent_config = IntentManager.INTENT_DEFAULT_CONFIG
 
-        # Send the intent to the snips_intent_a c
+        # Send the intent to the snips_intent_ac
         rospy.loginfo('Sending intent to /intent_ac')
 
-        # Record the intent if it was flowing
+        # Record the intent if it was on session
         if self.__on_session():
             if self.__intent_in_next_intents(intent):
                 self.session.flowed_intents.append(intent)
@@ -193,27 +231,37 @@ class IntentManager(Node):
                 self.stop_session_cb(None)
                 intent = "NotRecognized"
 
-        intent_goal = IntentACControllerGoal()
-        intent_goal.intent = intent
-        intent_goal.slots = json.dumps(slots)
-        intent_goal.raw_text = raw_text
-        if self.__on_session():
-            intent_goal.session = self.session
+        slots_insufficient, confirm_response = self.__slots_insufficient(slots, intent_config)
+        if slots_insufficient and not self.__on_session():
+            self.speaker.say_until_end(confirm_response)
+            self.__start_session(next_intents=[self.current_intent])
+            rospy.set_param('~insufficient_slot', True)
+        else:
+            if rospy.get_param('~insufficient_slot'):
+                self.__stop_session()
+                rospy.set_param('~insufficient_slot', False)
 
-        self.action_controller.send_goal(intent_goal)
-        rospy.loginfo('Goal sent')
+            intent_goal = IntentACControllerGoal()
+            intent_goal.intent = intent
+            intent_goal.slots = json.dumps(slots.raw_slots)
+            intent_goal.raw_text = raw_text
+            if self.__on_session():
+                intent_goal.session = self.session
 
-        # Show the preempt info
-        allow_preempt = intent_config['allow_preempt']
-        allow_msg = 'allowed' if intent_config['allow_preempt'] else 'not allowed'
-        rospy.loginfo(f"Intent {intent} was {allow_msg} to be preempted")
+            self.action_controller.send_goal(intent_goal)
+            rospy.loginfo('Goal sent')
 
-        # If the intent wasn't allowed to be preempted, wait until there's a result
-        # Else, don't wait
-        if not allow_preempt:
-            rospy.loginfo('Waiting for the intent to be executed')
-            self.action_controller.wait_for_result()
-            rospy.loginfo('Intent executed successfully')
+            # Show the preempt info
+            allow_preempt = intent_config.allow_preempt
+            allow_msg = 'allowed' if allow_preempt else 'not allowed'
+            rospy.loginfo(f"Intent {intent} was {allow_msg} to be preempted")
+
+            # If the intent wasn't allowed to be preempted, wait until there's a result
+            # Else, don't wait
+            if not allow_preempt:
+                rospy.loginfo('Waiting for the intent to be executed')
+                self.action_controller.wait_for_result()
+                rospy.loginfo('Intent executed successfully')
 
         result = IntentManagerResult(True)
         self.manager_server.set_succeeded(result, 'The intent was successfully handled')
