@@ -24,6 +24,7 @@ SOFTWARE.
 
 """
 import json
+import warnings
 from copy import copy
 
 import actionlib
@@ -117,21 +118,10 @@ class IntentManager(Node):
     def __establish_session(self, session):
         rospy.set_param('~on_session', True)
         self.session = copy(session)
-        self.s2t_start_session()
-
-    def __start_confirm_session(self, next_intents, custom_data=None):
-        req = SessionRequest()
-        if self.__on_session():
-            req = SessionRequest()
-            req.session_data.possible_next_intents = next_intents
-            req.session_data.custom_data = json.dumps(custom_data)
-            self.continue_session_cb(req)
-        else:
-            req.session_data.started_intent = self.current_intent
-            req.session_data.possible_next_intents = next_intents
-            if custom_data is not None:
-                req.session_data.custom_data = json.dumps(custom_data)
-            self.start_session_cb(req)
+        try:
+            self.s2t_start_session()
+        except rospy.ServiceException:
+            warnings.warn('Seems like you are debugging the program, Nothing happens', UserWarning)
 
     def start_session_cb(self, req: SessionRequest):
         if not self.__on_session():
@@ -149,7 +139,10 @@ class IntentManager(Node):
         if self.__on_session():
             rospy.set_param('~on_session', False)
             self.session = None
-            self.s2t_stop_session()
+            try:
+                self.s2t_stop_session()
+            except rospy.ServiceException:
+                warnings.warn('Seems like you are debugging the program, Nothing happens', UserWarning)
         return TriggerResponse()
 
     def blacklist_cb(self, blacklist: Blacklist):
@@ -195,7 +188,6 @@ class IntentManager(Node):
         rospy.loginfo('Sending intent to /intent_ac')
 
         # Record the intent if it was on session
-        slots_insufficient, confirm_response = self.intent_configs.slots_insufficient(intent, slots)
         if self.__on_session():
             if self.__intent_in_next_intents(intent):
                 self.session.flowed_intents.append(intent)
@@ -203,37 +195,27 @@ class IntentManager(Node):
                 self.stop_session_cb(None)
                 intent = "NotRecognized"
 
-        if slots_insufficient and not self.__on_session():
-            rospy.loginfo(confirm_response)
-            self.speaker.say_until_end(confirm_response)
-            self.__start_confirm_session(next_intents=[self.current_intent])
-            rospy.set_param('~insufficient_slot', True)
-        else:
-            if rospy.get_param('~insufficient_slot'):
-                self.stop_session_cb(None)
-                rospy.set_param('~insufficient_slot', False)
+        intent_goal = IntentACControllerGoal()
+        intent_goal.intent = intent
+        intent_goal.slots = json.dumps(slots.raw_slots)
+        intent_goal.raw_text = raw_text
+        if self.__on_session():
+            intent_goal.session = self.session
 
-            intent_goal = IntentACControllerGoal()
-            intent_goal.intent = intent
-            intent_goal.slots = json.dumps(slots.raw_slots)
-            intent_goal.raw_text = raw_text
-            if self.__on_session():
-                intent_goal.session = self.session
+        self.action_controller.send_goal(intent_goal)
+        rospy.loginfo('Goal sent')
 
-            self.action_controller.send_goal(intent_goal)
-            rospy.loginfo('Goal sent')
+        # Show the preempt info
+        allow_preempt = intent_config.allow_preempt
+        allow_msg = 'allowed' if allow_preempt else 'not allowed'
+        rospy.loginfo(f"Intent {intent} was {allow_msg} to be preempted")
 
-            # Show the preempt info
-            allow_preempt = intent_config.allow_preempt
-            allow_msg = 'allowed' if allow_preempt else 'not allowed'
-            rospy.loginfo(f"Intent {intent} was {allow_msg} to be preempted")
-
-            # If the intent wasn't allowed to be preempted, wait until there's a result
-            # Else, don't wait
-            if not allow_preempt:
-                rospy.loginfo('Waiting for the intent to be executed')
-                self.action_controller.wait_for_result()
-                rospy.loginfo('Intent executed successfully')
+        # If the intent wasn't allowed to be preempted, wait until there's a result
+        # Else, don't wait
+        if not allow_preempt:
+            rospy.loginfo('Waiting for the intent to be executed')
+            self.action_controller.wait_for_result()
+            rospy.loginfo('Intent executed successfully')
 
         result = IntentManagerResult(True)
         self.manager_server.set_succeeded(result, 'The intent was successfully handled')
