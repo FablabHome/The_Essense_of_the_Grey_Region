@@ -15,8 +15,6 @@ from rospkg import RosPack
 from sensor_msgs.msg import CompressedImage
 from std_srvs.srv import SetBool, SetBoolResponse
 
-from core.Detection.YOLODetection import DetectBox
-
 
 class YOLODetectionNode:
     W = 640
@@ -58,7 +56,6 @@ class YOLODetectionNode:
 
         self.bridge = CvBridge()
 
-        self.objects: [DetectBox] = []
         self.source_image = self.blob = None
 
     def image_callback(self, image: sensor_msgs.msg.CompressedImage):
