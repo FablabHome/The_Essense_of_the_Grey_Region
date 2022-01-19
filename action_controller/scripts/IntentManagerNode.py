@@ -37,7 +37,7 @@ from std_srvs.srv import Trigger, TriggerResponse
 from core.Dtypes import IntentConfigs
 from core.Nodes import Node
 from core.tools import Speaker
-from core.utils.KeywordParsers import HeySnipsNLUParser
+from core.utils import HeySnipsNLUParser
 
 
 class IntentManager(Node):
