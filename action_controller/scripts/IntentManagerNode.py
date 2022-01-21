@@ -39,6 +39,14 @@ from core.Nodes import Node
 from core.tools import Speaker
 from core.utils import HeySnipsNLUParser
 
+from rich.console import Console
+from rich.traceback import install
+from rich.table import Table
+
+console = Console()
+print = console.print
+install(show_locals=True)
+
 
 class IntentManager(Node):
     def __init__(self):
@@ -165,27 +173,27 @@ class IntentManager(Node):
         self.current_intent = intent
 
         # Show the report
-        rospy.loginfo(f"Text '{raw_text}' successfully parsed, parsing result:")
-        self.__show_nlu_report(intent, slots.raw_slots)
+        console.log(f"Text '{raw_text}' successfully parsed, parsing result:")
+        self.__show_nlu_report(intent, slots)
 
         if intent is None:
-            rospy.logwarn(f"Text '{raw_text}' doesn't match any intents")
+            console.log(f"[bold][red]Text '{raw_text}' doesn't match any intents[/][/]")
             intent = 'NotRecognized'
 
         # Ignore the intent if it was in the blacklist
         if intent in self.intent_blacklist:
-            rospy.logerr(f'Intent {intent} was currently blacklisted by boss, ignoring')
+            console.log(f'[bold][red]Intent {intent} was currently blacklisted by boss, ignoring[/][/]')
             return
 
         # Get intent configs from the config file
         try:
             intent_config = self.intent_configs[intent]
         except KeyError:
-            rospy.logwarn(f"Intent {intent}'s config doesn't exist, using default")
+            console.log(f"[yellow]Intent {intent}'s config doesn't exist, using default[/]")
             intent_config = IntentConfigs.INTENT_DEFAULT_CONFIG
 
         # Send the intent to the snips_intent_ac
-        rospy.loginfo('Sending intent to /intent_ac')
+        console.log('Sending intent to /intent_ac')
 
         # Record the intent if it was on session
         if self.__on_session():
@@ -203,19 +211,19 @@ class IntentManager(Node):
             intent_goal.session = self.session
 
         self.action_controller.send_goal(intent_goal)
-        rospy.loginfo('Goal sent')
+        console.log('[bold][green]Intent goal sent[/][/]')
 
         # Show the preempt info
         allow_preempt = intent_config.allow_preempt
         allow_msg = 'allowed' if allow_preempt else 'not allowed'
-        rospy.loginfo(f"Intent {intent} was {allow_msg} to be preempted")
+        console.log(f"[cyan]Intent {intent} was {allow_msg} to be preempted[/]")
 
         # If the intent wasn't allowed to be preempted, wait until there's a result
         # Else, don't wait
         if not allow_preempt:
-            rospy.loginfo('Waiting for the intent to be executed')
+            console.log('[yellow]Waiting for the intent to be executed[/]')
             self.action_controller.wait_for_result()
-            rospy.loginfo('Intent executed successfully')
+            console.log('[bold][green]Intent executed successfully[/]')
 
         result = IntentManagerResult(True)
         self.manager_server.set_succeeded(result, 'The intent was successfully handled')
@@ -228,17 +236,20 @@ class IntentManager(Node):
 
     @staticmethod
     def __show_nlu_report(intent, slots):
-        print('\n***************************\n| Parsing Result |')
+        table = Table()
+        print('\n******************\n| Parsing Result |')
         print('*************************************************************')
         print(f'Final intent: {intent}')
         print('Final Slots:')
-        for idx, slot in enumerate(slots):
-            entity = slot['entity']
-            raw_value = slot['rawValue']
-            print(f'Slot {idx + 1}:')
-            print(f'\tentity: {entity}, rawValue: {raw_value}')
+        table.add_column('Slot idx')
+        table.add_column('entity')
+        table.add_column('rawValue')
+        for idx, slot in enumerate(slots.slots):
+            entity = slot.entity
+            raw_value = slot.value.rawValue
+            table.add_row(str(idx), entity, str(raw_value))
 
-        print()
+        print(table)
         print('*************************************************************\n')
 
     def main(self):
