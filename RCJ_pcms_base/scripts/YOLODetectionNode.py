@@ -11,9 +11,13 @@ from cv_bridge import CvBridge
 from home_robot_msgs.msg import ObjectBox, ObjectBoxes
 from home_robot_msgs.srv import ChangeImgSource, ChangeImgSourceResponse, ChangeImgSourceRequest
 from keras_yolo3.yolo import YOLO_np
+from rich.console import Console
 from rospkg import RosPack
 from sensor_msgs.msg import CompressedImage
 from std_srvs.srv import SetBool, SetBoolResponse
+
+console = Console()
+print = console.print
 
 
 class YOLODetectionNode:
@@ -107,32 +111,36 @@ class YOLODetectionNode:
 
 if __name__ == "__main__":
     rospy.init_node('YD')
-    base = RosPack().get_path('rcj_pcms_base') + '/..'
-    _model_h5 = os.path.join(base, 'models/YOLO/yolov3.h5')
-    _coco_classes = os.path.join(base, 'models/YOLO/coco_classes.txt')
-    _anchors = os.path.join(base, 'models/YOLO/yolo3_anchors.txt')
-    _model = YOLO_np(
-        model_type='yolo3_darknet',
-        yolo_weights_path='',
-        weights_path=_model_h5,
-        anchors_path=_anchors,
-        classes_path=_coco_classes
-    )
+    with console.status("[magenta]Loading YOLO into program") as _:
+        base = RosPack().get_path('rcj_pcms_base') + '/..'
+        _model_h5 = os.path.join(base, 'models/YOLO/yolov3.h5')
+        _coco_classes = os.path.join(base, 'models/YOLO/coco_classes.txt')
+        _anchors = os.path.join(base, 'models/YOLO/yolo3_anchors.txt')
+        _model = YOLO_np(
+            model_type='yolo3_darknet',
+            yolo_weights_path='',
+            weights_path=_model_h5,
+            anchors_path=_anchors,
+            classes_path=_coco_classes
+        )
+    print("[bold cyan]YOLO loaded")
 
-    classnames = open(_coco_classes).readlines()
+    with console.status("Loading other components") as _:
+        classnames = open(_coco_classes).readlines()
 
-    box = ObjectBox()
+        box = ObjectBox()
 
-    boxes = ObjectBoxes()
+        boxes = ObjectBoxes()
 
-    node = YOLODetectionNode()
-    rate = rospy.Rate(35)
+        node = YOLODetectionNode()
+        rate = rospy.Rate(35)
 
-    pub = rospy.Publisher(
-        '~boxes',
-        ObjectBoxes,
-        queue_size=1
-    )
+        pub = rospy.Publisher(
+            '~boxes',
+            ObjectBoxes,
+            queue_size=1
+        )
+    print("[bold green]Done")
 
     while not rospy.is_shutdown() and not node.kill:
         if not node.lock:
