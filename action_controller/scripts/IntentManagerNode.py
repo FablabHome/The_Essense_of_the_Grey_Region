@@ -51,69 +51,76 @@ install(show_locals=True)
 class IntentManager(Node):
     def __init__(self):
         super(IntentManager, self).__init__("intent_manager", anonymous=False)
-        # Load the intent configs
-        config_file = rospy.get_param('~config_file')
-        self.intent_configs = IntentConfigs(config_file)
+        with console.status("[yellow] Starting the intent_manager") as status:
+            # Load the intent configs
+            console.log("Loading configs")
+            config_file = rospy.get_param('~config_file')
+            self.intent_configs = IntentConfigs(config_file)
 
-        # Load the nlu engines
-        engine_path = rospy.get_param('~engine_path')
-        engine_name = rospy.get_param('~engine_name')
-        self.nlu_engine = HeySnipsNLUParser(engine_configs={
-            engine_name: engine_path
-        })
+            # Load the nlu engines
+            console.log("[cyan]Loading NLU engine")
+            engine_path = rospy.get_param('~engine_path')
+            engine_name = rospy.get_param('~engine_name')
+            self.nlu_engine = HeySnipsNLUParser(engine_configs={
+                engine_name: engine_path
+            })
 
-        # initialize the speaker
-        self.speaker = Speaker()
+            # initialize the speaker
+            console.log("Initializing speaker")
+            self.speaker = Speaker()
 
-        # The Intent blacklist from boss
-        self.intent_blacklist = []
+            # The Intent blacklist from boss
+            self.intent_blacklist = []
 
-        # Get the blacklist from boss
-        rospy.Subscriber(
-            "/intent_boss/blacklist",
-            Blacklist,
-            self.blacklist_cb,
-            queue_size=1
-        )
+            # Get the blacklist from boss
+            console.log("[magenta]Getting black list from boss")
+            rospy.Subscriber(
+                "/intent_boss/blacklist",
+                Blacklist,
+                self.blacklist_cb,
+                queue_size=1
+            )
 
-        # Create the session request entry
-        rospy.Service('~start_session', Session, self.start_session_cb)
-        # Create the continue session entry
-        rospy.Service('~continue_session', Session, self.continue_session_cb)
-        # Create the stop session entry
-        rospy.Service('~stop_session', Trigger, self.stop_session_cb)
+            # Create the session request entry
+            console.log("Initializing services")
+            rospy.Service('~start_session', Session, self.start_session_cb)
+            # Create the continue session entry
+            rospy.Service('~continue_session', Session, self.continue_session_cb)
+            # Create the stop session entry
+            rospy.Service('~stop_session', Trigger, self.stop_session_cb)
 
-        # Calling the SpeechToText node to start flow
-        self.s2t_start_session = rospy.ServiceProxy('/voice/start_session', Trigger)
-        self.s2t_stop_session = rospy.ServiceProxy('/voice/stop_session', Trigger)
+            # Calling the SpeechToText node to start flow
+            self.s2t_start_session = rospy.ServiceProxy('/voice/start_session', Trigger)
+            self.s2t_stop_session = rospy.ServiceProxy('/voice/stop_session', Trigger)
 
-        # Create a instance to call the ActionController
-        self.action_controller = actionlib.SimpleActionClient(
-            'intent_ac',
-            IntentACControllerAction
-        )
+            # Create a instance to call the ActionController
+            self.action_controller = actionlib.SimpleActionClient(
+                'intent_ac',
+                IntentACControllerAction
+            )
 
-        # Initialize the action server
-        self.manager_server = actionlib.SimpleActionServer(
-            self.name,
-            IntentManagerAction,
-            execute_cb=self.voice_cb,
-            auto_start=False
-        )
-        self.manager_server.start()
+            # Initialize the action server
+            console.log("Starting the action server")
+            self.manager_server = actionlib.SimpleActionServer(
+                self.name,
+                IntentManagerAction,
+                execute_cb=self.voice_cb,
+                auto_start=False
+            )
+            self.manager_server.start()
 
-        # session variables
-        self.session = None
-        rospy.set_param('~on_session', False)
-        rospy.set_param('~insufficient_slot', False)
+            # session variables
+            self.session = None
+            rospy.set_param('~on_session', False)
 
-        # The current intent
-        self.current_intent = ''
+            # The current intent
+            self.current_intent = ''
 
-        # continue the session or not
-        self.start_session = False
-        self.continue_session = False
+            # continue the session or not
+            self.start_session = False
+            self.continue_session = False
 
+        print("[bold green]intent_manager is online")
         self.main()
 
     @staticmethod
@@ -159,7 +166,7 @@ class IntentManager(Node):
     def voice_cb(self, voice_goal: IntentManagerGoal):
         # Get the text from the goal
         raw_text = voice_goal.text
-        rospy.loginfo(f'Parsing text: {raw_text}')
+        console.log(f'[bold]Parsing text: "{raw_text}"')
 
         # Feedback to the voice server that it was successes
         feedback = IntentManagerFeedback()
@@ -177,23 +184,23 @@ class IntentManager(Node):
         self.__show_nlu_report(intent, slots)
 
         if intent is None:
-            console.log(f"[bold][red]Text '{raw_text}' doesn't match any intents[/][/]")
+            console.log(f"[bold red]Text '{raw_text}' doesn't match any intents")
             intent = 'NotRecognized'
 
         # Ignore the intent if it was in the blacklist
         if intent in self.intent_blacklist:
-            console.log(f'[bold][red]Intent {intent} was currently blacklisted by boss, ignoring[/][/]')
+            console.log(f'[bold red]Intent {intent} was currently blacklisted by boss, ignoring')
             return
 
         # Get intent configs from the config file
         try:
             intent_config = self.intent_configs[intent]
         except KeyError:
-            console.log(f"[yellow]Intent {intent}'s config doesn't exist, using default[/]")
+            console.log(f"[yellow]Intent {intent}'s config doesn't exist, using default")
             intent_config = IntentConfigs.INTENT_DEFAULT_CONFIG
 
         # Send the intent to the snips_intent_ac
-        console.log('Sending intent to /intent_ac')
+        console.log('Sending intent goal to /intent_ac')
 
         # Record the intent if it was on session
         if self.__on_session():
@@ -211,19 +218,19 @@ class IntentManager(Node):
             intent_goal.session = self.session
 
         self.action_controller.send_goal(intent_goal)
-        console.log('[bold][green]Intent goal sent[/][/]')
+        console.log('[bold green]Intent goal sent')
 
         # Show the preempt info
         allow_preempt = intent_config.allow_preempt
         allow_msg = 'allowed' if allow_preempt else 'not allowed'
-        console.log(f"[cyan]Intent {intent} was {allow_msg} to be preempted[/]")
+        console.log(f"[cyan]Intent {intent} was {allow_msg} to be preempted")
 
         # If the intent wasn't allowed to be preempted, wait until there's a result
-        # Else, don't wait
+        # else, don't wait
         if not allow_preempt:
-            console.log('[yellow]Waiting for the intent to be executed[/]')
-            self.action_controller.wait_for_result()
-            console.log('[bold][green]Intent executed successfully[/]')
+            with console.status('[yellow]Waiting for the intent to be executed') as status:
+                self.action_controller.wait_for_result()
+            print('[bold green]Intent executed successfully')
 
         result = IntentManagerResult(True)
         self.manager_server.set_succeeded(result, 'The intent was successfully handled')
