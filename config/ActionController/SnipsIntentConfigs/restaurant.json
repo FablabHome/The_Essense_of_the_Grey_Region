@@ -1,25 +1,51 @@
 {
     "turnLightOn": {
         "allow_preempt": false,
+        "max_re-ask": 3,
         "required_slots": {
             "room": {
-                "confirm_response": "Ok, but which room do you want to light up?"
+                "confirm_response": "Ok, but which room do you want to light up?",
+                "confirm_intent": "ConfirmRoom"
             }
         }
     },
     "turnLightOff": {
         "allow_preempt": false,
+        "max_re-ask": 3,
         "required_slots": {
             "room": {
-                "confirm_response": "Ok, but which room do you want to light off?"
+                "confirm_response": "Ok, but which room do you want to light off?",
+                "confirm_intent": "ConfirmRoom"
             }
         }
     },
     "setLightColor": {
         "allow_preempt": false,
+        "max_re-ask": 3,
         "required_slots": {
             "color": {
-                "confirm_response": "Ok, but what color do you want?"
+                "confirm_response": "Ok, but what color do you want?",
+                "confirm_intent": "ConfirmColor"
+            }
+        }
+    },
+    "ConfirmRoom": {
+        "allow_preempt": false,
+        "max_re-ask": 3,
+        "required_slots": {
+            "room": {
+                "confirm_response": "Ok, but which room do you want to light up?",
+                "confirm_intent": "ConfirmRoom"
+            }
+        }
+    },
+    "ConfirmColor": {
+        "allow_preempt": false,
+        "max_re-ask": 3,
+        "required_slots": {
+            "color": {
+                "confirm_response": "Ok, but what color do you want?",
+                "confirm_intent": "ConfirmColor"
             }
         }
     }
