@@ -23,25 +23,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 """
+import hashlib
 import json
-import warnings
 from copy import copy
+from datetime import datetime
 
 import actionlib
 import rospy
 from home_robot_msgs.msg import IntentManagerAction, IntentManagerGoal, Blacklist, IntentACControllerAction, \
     IntentACControllerGoal, IntentManagerResult, IntentManagerFeedback
 from home_robot_msgs.srv import Session, SessionRequest, SessionResponse
+from rich.console import Console
+from rich.table import Table
+from rich.text import Text
+from rich.traceback import install
 from std_srvs.srv import Trigger, TriggerResponse
 
 from core.Dtypes import IntentConfigs
 from core.Nodes import Node
 from core.tools import Speaker
 from core.utils import HeySnipsNLUParser
-
-from rich.console import Console
-from rich.traceback import install
-from rich.table import Table
 
 console = Console()
 print = console.print
@@ -50,7 +51,12 @@ install(show_locals=True)
 
 class IntentManager(Node):
     def __init__(self):
-        super(IntentManager, self).__init__("intent_manager", anonymous=False)
+        super(IntentManager, self).__init__(
+            name="intent_manager",
+            anonymous=False,
+            default_state='NORMAL',
+            node_group='/intent/'
+        )
         with console.status("[yellow] Starting the intent_manager") as status:
             # Load the intent configs
             console.log("Loading configs")
@@ -90,8 +96,8 @@ class IntentManager(Node):
             rospy.Service('~stop_session', Trigger, self.stop_session_cb)
 
             # Calling the SpeechToText node to start flow
-            self.s2t_start_session = rospy.ServiceProxy('/voice/start_session', Trigger)
-            self.s2t_stop_session = rospy.ServiceProxy('/voice/stop_session', Trigger)
+            # self.s2t_start_session = rospy.ServiceProxy('/voice/start_session', Trigger)
+            # self.s2t_stop_session = rospy.ServiceProxy('/voice/stop_session', Trigger)
 
             # Create a instance to call the ActionController
             self.action_controller = actionlib.SimpleActionClient(
@@ -117,8 +123,8 @@ class IntentManager(Node):
             self.current_intent = ''
 
             # continue the session or not
-            self.start_session = False
-            self.continue_session = False
+            # self.start_session = False
+            # self.continue_session = False
 
         print("[bold green]intent_manager is online")
         self.main()
@@ -128,25 +134,66 @@ class IntentManager(Node):
         return rospy.get_param('~on_session')
 
     def __intent_in_next_intents(self, intent):
-        return intent in self.session.possible_next_intents and len(self.session.possible_next_intents) != 0
+        return (intent in self.session.possible_next_intents) or len(self.session.possible_next_intents) == 0
 
     def __establish_session(self, session):
         rospy.set_param('~on_session', True)
         self.session = copy(session)
-        try:
-            self.s2t_start_session()
-        except rospy.ServiceException:
-            warnings.warn('Seems like you are debugging the program, Nothing happens', UserWarning)
+        # try:
+        #     self.s2t_start_session()
+        # except rospy.ServiceException:
+        #     warnings.warn('Seems like you are debugging the program, Nothing happens', UserWarning)
+
+    @staticmethod
+    def __show_session_summary(session):
+        summary = Table(show_lines=True)
+        summary.add_column('Parameter')
+        summary.add_column('Value')
+        summary.add_row('session_id', session.id)
+        summary.add_row('started_intent', session.started_intent)
+        summary.add_row('custom_data', session.custom_data)
+        summary.add_row('max_rounds', Text(str(session.max_rounds), style='bold magenta'))
+        summary.add_row('elapsed_rounds', str(session.elapsed_rounds))
+        print(summary)
+
+    @staticmethod
+    def __show_nlu_report(intent, slots):
+        table = Table()
+        print('\n******************\n| Parsing Result |')
+        print('*************************************************************')
+        print(f'Final intent: {intent}')
+        print('Final Slots:')
+        table.add_column('Slot idx')
+        table.add_column('entity')
+        table.add_column('rawValue')
+        for idx, slot in enumerate(slots.slots):
+            entity = slot.entity
+            raw_value = slot.value.rawValue
+            table.add_row(str(idx), entity, str(raw_value))
+
+        print(table)
+        print('*************************************************************\n')
+
+    @staticmethod
+    def __generate_session_id():
+        date = str(datetime.now())
+        sess_id = hashlib.sha256(date.encode())
+        return sess_id.hexdigest()
 
     def start_session_cb(self, req: SessionRequest):
         if not self.__on_session():
-            self.start_session = True
+            # self.start_session = True
+            req.session_data.id = self.__generate_session_id()
+            console.log(f'[bold yellow]A session has been established with the following parameters:')
+            self.__show_session_summary(req.session_data)
             self.__establish_session(req.session_data)
         return SessionResponse()
 
     def continue_session_cb(self, req: SessionRequest):
         if self.__on_session():
-            self.continue_session = True
+            # self.continue_session = True
+            console.log(f'[bold yellow]The session has been continued with the following parameters:')
+            self.__show_session_summary(req.session_data)
             self.__establish_session(req.session_data)
         return SessionResponse()
 
@@ -154,16 +201,19 @@ class IntentManager(Node):
         if self.__on_session():
             rospy.set_param('~on_session', False)
             self.session = None
-            try:
-                self.s2t_stop_session()
-            except rospy.ServiceException:
-                warnings.warn('Seems like you are debugging the program, Nothing happens', UserWarning)
+            # try:
+            #     self.s2t_stop_session()
+            # except rospy.ServiceException:
+            #     warnings.warn('Seems like you are debugging the program, Nothing happens', UserWarning)
         return TriggerResponse()
 
     def blacklist_cb(self, blacklist: Blacklist):
         self.intent_blacklist = blacklist.blacklist
 
     def voice_cb(self, voice_goal: IntentManagerGoal):
+        # Set the state to NORMAL first, if there isn't any request, it will stay the same
+        # self.set_state('NORMAL')
+
         # Get the text from the goal
         raw_text = voice_goal.text
         console.log(f'[bold]Parsing text: "{raw_text}"')
@@ -204,6 +254,7 @@ class IntentManager(Node):
 
         # Record the intent if it was on session
         if self.__on_session():
+            self.session.elapsed_rounds += 1
             if self.__intent_in_next_intents(intent):
                 self.session.flowed_intents.append(intent)
             else:
@@ -235,29 +286,17 @@ class IntentManager(Node):
         result = IntentManagerResult(True)
         self.manager_server.set_succeeded(result, 'The intent was successfully handled')
 
-        if not (self.continue_session or self.start_session):
-            self.stop_session_cb(None)
+        self.next_state_to_param()
+        # if not (self.continue_session or self.start_session):
+        # if self.get_state() not in ['ON_SESSION', 'INSUFFICIENT']:
 
-        self.start_session = False
-        self.continue_session = False
+        # If no session is going to establish, end the session
+        if self.__on_session():
+            if self.session.elapsed_rounds >= self.session.max_rounds:
+                self.stop_session_cb(None)
 
-    @staticmethod
-    def __show_nlu_report(intent, slots):
-        table = Table()
-        print('\n******************\n| Parsing Result |')
-        print('*************************************************************')
-        print(f'Final intent: {intent}')
-        print('Final Slots:')
-        table.add_column('Slot idx')
-        table.add_column('entity')
-        table.add_column('rawValue')
-        for idx, slot in enumerate(slots.slots):
-            entity = slot.entity
-            raw_value = slot.value.rawValue
-            table.add_row(str(idx), entity, str(raw_value))
-
-        print(table)
-        print('*************************************************************\n')
+        # self.start_session = False
+        # self.continue_session = False
 
     def main(self):
         while not rospy.is_shutdown():
