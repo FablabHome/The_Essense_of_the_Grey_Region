@@ -1,7 +1,7 @@
 {
     "turnLightOn": {
         "allow_preempt": false,
-        "max_re-ask": 3,
+        "max_re_ask": 3,
         "required_slots": {
             "room": {
                 "confirm_response": "Ok, but which room do you want to light up?",
@@ -11,7 +11,7 @@
     },
     "turnLightOff": {
         "allow_preempt": false,
-        "max_re-ask": 3,
+        "max_re_ask": 3,
         "required_slots": {
             "room": {
                 "confirm_response": "Ok, but which room do you want to light off?",
@@ -21,7 +21,7 @@
     },
     "setLightColor": {
         "allow_preempt": false,
-        "max_re-ask": 3,
+        "max_re_ask": 3,
         "required_slots": {
             "color": {
                 "confirm_response": "Ok, but what color do you want?",
@@ -31,7 +31,7 @@
     },
     "ConfirmRoom": {
         "allow_preempt": false,
-        "max_re-ask": 3,
+        "max_re_ask": 3,
         "required_slots": {
             "room": {
                 "confirm_response": "Ok, but which room do you want to light up?",
@@ -41,7 +41,7 @@
     },
     "ConfirmColor": {
         "allow_preempt": false,
-        "max_re-ask": 3,
+        "max_re_ask": 3,
         "required_slots": {
             "color": {
                 "confirm_response": "Ok, but what color do you want?",
