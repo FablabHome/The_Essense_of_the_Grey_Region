@@ -40,8 +40,7 @@ from rich.traceback import install
 from std_srvs.srv import Trigger, TriggerResponse
 
 from core.Dtypes import IntentConfigs
-from core.Nodes import Node
-from core.tools import Speaker
+from core.Nodes import Controller
 from core.utils import HeySnipsNLUParser
 
 console = Console()
@@ -49,13 +48,14 @@ print = console.print
 install(show_locals=True)
 
 
-class IntentManager(Node):
+class IntentManager(Controller):
     def __init__(self):
         super(IntentManager, self).__init__(
             name="intent_manager",
             anonymous=False,
             default_state='NORMAL',
-            node_group='/intent/'
+            state_param_group='/intent/',
+            states=['NORMAL', 'ON_SESSION', 'SLOT_MISSING']
         )
         with console.status("[yellow] Starting the intent_manager") as status:
             # Load the intent configs
@@ -70,10 +70,6 @@ class IntentManager(Node):
             self.nlu_engine = HeySnipsNLUParser(engine_configs={
                 engine_name: engine_path
             })
-
-            # initialize the speaker
-            console.log("Initializing speaker")
-            self.speaker = Speaker()
 
             # The Intent blacklist from boss
             self.intent_blacklist = []
@@ -95,10 +91,6 @@ class IntentManager(Node):
             # Create the stop session entry
             rospy.Service('~stop_session', Trigger, self.stop_session_cb)
 
-            # Calling the SpeechToText node to start flow
-            # self.s2t_start_session = rospy.ServiceProxy('/voice/start_session', Trigger)
-            # self.s2t_stop_session = rospy.ServiceProxy('/voice/stop_session', Trigger)
-
             # Create a instance to call the ActionController
             self.action_controller = actionlib.SimpleActionClient(
                 'intent_ac',
@@ -119,16 +111,43 @@ class IntentManager(Node):
             self.session = None
             rospy.set_param('~on_session', False)
 
-            # The current intent
-            self.current_intent = ''
-
-            # continue the session or not
-            # self.start_session = False
-            # self.continue_session = False
-
         print("[bold green]intent_manager is online")
         self.main()
 
+    """
+    ********************************* Session callbacks starts here ***********************************
+    """
+    def start_session_cb(self, req: SessionRequest):
+        if not self.__on_session():
+            # Generate session ID
+            req.session_data.id = self.__generate_session_id()
+            console.log(f'[bold yellow]A session has been established with the following parameters:')
+            self.__show_session_summary(req.session_data)
+            self.__establish_session(req.session_data)
+        return SessionResponse()
+
+    def continue_session_cb(self, req: SessionRequest):
+        if self.__on_session():
+            console.log(f'[bold yellow]The session has been continued with the following parameters:')
+            self.__show_session_summary(req.session_data)
+            self.__establish_session(req.session_data)
+        return SessionResponse()
+
+    def stop_session_cb(self, req):
+        if self.__on_session():
+            rospy.set_param('~on_session', False)
+            self.session = None
+        return TriggerResponse()
+    """
+    ********************************* Session callbacks ends here *************************************
+    """
+
+    def blacklist_cb(self, blacklist: Blacklist):
+        self.intent_blacklist = blacklist.blacklist
+
+    """
+    ///////////////////////////////// Helper functions starts here /////////////////////////////////////
+    """
     @staticmethod
     def __on_session():
         return rospy.get_param('~on_session')
@@ -139,10 +158,6 @@ class IntentManager(Node):
     def __establish_session(self, session):
         rospy.set_param('~on_session', True)
         self.session = copy(session)
-        # try:
-        #     self.s2t_start_session()
-        # except rospy.ServiceException:
-        #     warnings.warn('Seems like you are debugging the program, Nothing happens', UserWarning)
 
     @staticmethod
     def __show_session_summary(session):
@@ -180,35 +195,20 @@ class IntentManager(Node):
         sess_id = hashlib.sha256(date.encode())
         return sess_id.hexdigest()
 
-    def start_session_cb(self, req: SessionRequest):
-        if not self.__on_session():
-            # self.start_session = True
-            req.session_data.id = self.__generate_session_id()
-            console.log(f'[bold yellow]A session has been established with the following parameters:')
-            self.__show_session_summary(req.session_data)
-            self.__establish_session(req.session_data)
-        return SessionResponse()
+    def __handle_feedback(self):
+        feedback = IntentManagerFeedback()
+        feedback.status = 'Accepted'
+        self.manager_server.publish_feedback(feedback)
 
-    def continue_session_cb(self, req: SessionRequest):
+    def __check_if_end_session(self):
+        # If no session is going to establish, end the session
         if self.__on_session():
-            # self.continue_session = True
-            console.log(f'[bold yellow]The session has been continued with the following parameters:')
-            self.__show_session_summary(req.session_data)
-            self.__establish_session(req.session_data)
-        return SessionResponse()
+            if self.session.elapsed_rounds >= self.session.max_rounds:
+                self.stop_session_cb(None)
 
-    def stop_session_cb(self, req):
-        if self.__on_session():
-            rospy.set_param('~on_session', False)
-            self.session = None
-            # try:
-            #     self.s2t_stop_session()
-            # except rospy.ServiceException:
-            #     warnings.warn('Seems like you are debugging the program, Nothing happens', UserWarning)
-        return TriggerResponse()
-
-    def blacklist_cb(self, blacklist: Blacklist):
-        self.intent_blacklist = blacklist.blacklist
+    """
+    ///////////////////////////////// Helper functions ends here /////////////////////////////////////
+    """
 
     def voice_cb(self, voice_goal: IntentManagerGoal):
         # Set the state to NORMAL first, if there isn't any request, it will stay the same
@@ -219,15 +219,12 @@ class IntentManager(Node):
         console.log(f'[bold]Parsing text: "{raw_text}"')
 
         # Feedback to the voice server that it was successes
-        feedback = IntentManagerFeedback()
-        feedback.status = 'Accepted'
-        self.manager_server.publish_feedback(feedback)
+        self.__handle_feedback()
 
         # Parse the intent from snips-nlu
         result = self.nlu_engine.parse(raw_text)
         intent = result.intent
         slots = result.slots
-        self.current_intent = intent
 
         # Show the report
         console.log(f"Text '{raw_text}' successfully parsed, parsing result:")
@@ -261,6 +258,7 @@ class IntentManager(Node):
                 self.stop_session_cb(None)
                 intent = "NotRecognized"
 
+        # Serialize information into ROS message
         intent_goal = IntentACControllerGoal()
         intent_goal.intent = intent
         intent_goal.slots = json.dumps(slots.raw_slots)
@@ -271,7 +269,7 @@ class IntentManager(Node):
         self.action_controller.send_goal(intent_goal)
         console.log('[bold green]Intent goal sent')
 
-        # Show the preempt info
+        # Show preempt info
         allow_preempt = intent_config.allow_preempt
         allow_msg = 'allowed' if allow_preempt else 'not allowed'
         console.log(f"[cyan]Intent {intent} was {allow_msg} to be preempted")
@@ -286,17 +284,8 @@ class IntentManager(Node):
         result = IntentManagerResult(True)
         self.manager_server.set_succeeded(result, 'The intent was successfully handled')
 
-        self.next_state_to_param()
-        # if not (self.continue_session or self.start_session):
-        # if self.get_state() not in ['ON_SESSION', 'INSUFFICIENT']:
-
         # If no session is going to establish, end the session
-        if self.__on_session():
-            if self.session.elapsed_rounds >= self.session.max_rounds:
-                self.stop_session_cb(None)
-
-        # self.start_session = False
-        # self.continue_session = False
+        self.__check_if_end_session()
 
     def main(self):
         while not rospy.is_shutdown():
