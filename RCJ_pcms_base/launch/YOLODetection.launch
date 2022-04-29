@@ -1,5 +1,6 @@
 <launch>
     <arg name="image_source" default="/camera/rgb/image_raw/compressed"/>
+    <arg name="model_type"/>
     <arg name="reverse" default="false"/>
     <node
             name="YD"
@@ -9,6 +10,7 @@
             output="screen"
     >
         <param name="image_source" type="str" value="$(arg image_source)"/>
+        <param name="model_type" type="str" value="$(arg model_type)"/>
         <param name="reverse" type="bool" value="$(arg reverse)"/>
     </node>
 </launch>
