@@ -1,39 +1,53 @@
 #!/usr/bin/env python3
 
-import os
-
 import cv2 as cv
-import numpy as np
 import rospy
 import sensor_msgs.msg
 from PIL import Image
 from cv_bridge import CvBridge
-from home_robot_msgs.msg import ObjectBox, ObjectBoxes
+from home_robot_msgs.msg import ObjectBoxes
 from home_robot_msgs.srv import ChangeImgSource, ChangeImgSourceResponse, ChangeImgSourceRequest
-from keras_yolo3.yolo import YOLO_np
 from rich.console import Console
-from rospkg import RosPack
 from sensor_msgs.msg import CompressedImage
-from std_srvs.srv import SetBool, SetBoolResponse
+from std_srvs.srv import Trigger, TriggerResponse
+
+from core.Nodes import Node
+from core.SensorFuncWrapper import YOLOV5
 
 console = Console()
 print = console.print
 
 
-class YOLODetectionNode:
+class YOLODetectionNode(Node):
     W = 640
     H = 480
 
-    def __init__(self):
-        rospy.loginfo(f'Getting image from {rospy.get_param("~image_source")}')
-        self.source_image_pub = rospy.Publisher(
+    def __init__(self, node_name, anonymous=False):
+        super(YOLODetectionNode, self).__init__(node_name, anonymous)
+
+        with console.status("[magenta]Loading YOLO into program") as status:
+            self.yolo = YOLOV5(rospy.get_param('~model_type'))
+
+            image_source = rospy.get_param('~image_source')
+            status.update(f'[bold yellow]Getting image from {rospy.get_param("~image_source")}', spinner='smiley')
+            rospy.wait_for_message(image_source, CompressedImage)
+            console.log(f"Camera topic ok")
+        print("[bold cyan]YOLO loaded")
+
+        self.boxes_pub = rospy.Publisher(
+            '~boxes',
+            ObjectBoxes,
+            queue_size=1
+        )
+
+        self.drown_image_pub = rospy.Publisher(
             '~source_image/compressed',
             CompressedImage,
             queue_size=1
         )
 
         self.cam_sub = rospy.Subscriber(
-            rospy.get_param('~image_source', '/camera/rgb/image_raw'),
+            image_source,
             sensor_msgs.msg.CompressedImage,
             self.image_callback,
             queue_size=1
@@ -46,21 +60,27 @@ class YOLODetectionNode:
         )
         rospy.Service(
             '~lock',
-            SetBool,
+            Trigger,
             self.lock_callback
         )
         rospy.Service(
             '~kill',
-            SetBool,
+            Trigger,
             self.kill_callback
         )
+        rospy.Service(
+            '~publish_drown_image',
+            Trigger,
+            self.publish_drown_image_callback
+        )
 
-        self.lock = False
-        self.kill = False
+        self._isLock = False
+        self._isKill = False
+        self._isPublishDrownImage = False
 
         self.bridge = CvBridge()
 
-        self.source_image = self.blob = None
+        self._srcframe = None
 
     def image_callback(self, image: sensor_msgs.msg.CompressedImage):
         input_image = self.bridge.compressed_imgmsg_to_cv2(image)
@@ -71,13 +91,7 @@ class YOLODetectionNode:
         YOLODetectionNode.H = H
         YOLODetectionNode.W = W
 
-        self.source_image = input_image
-        self.blob = Image.fromarray(input_image)
-
-        # self.net_yolo.setInput(blob)
-        # outputs = self.net_yolo.forward()
-
-        # self.objects = DetectBox.parse_output(outputs, W, H)
+        self._srcframe = input_image
 
     def change_camera(self, new_cam_topic: ChangeImgSourceRequest):
         self.cam_sub.unregister()
@@ -95,105 +109,52 @@ class YOLODetectionNode:
             ok = True
         except rospy.exceptions.ROSException:
             ok = False
-            self.objects = []
-            self.source_image = None
+            self._srcframe = None
 
         return ChangeImgSourceResponse(ok=ok)
 
     def lock_callback(self, data):
-        self.lock = data.data
-        return SetBoolResponse()
+        self._isLock = not self._isLock
+        return TriggerResponse(success=True, message="YOLO successfully locked")
 
     def kill_callback(self, data):
-        self.kill = data.data
-        return SetBoolResponse()
+        self._isKill = not self._isKill
+        return TriggerResponse(success=True, message="YOLO successfully killed")
 
+    def publish_drown_image_callback(self, data):
+        self._isPublishDrownImage = not self._isPublishDrownImage
+        will_or_not = 'will' if self._isPublishDrownImage else 'will not'
+        return TriggerResponse(success=True, message=f"YOLO {will_or_not} publish drown image starting from now on")
 
-if __name__ == "__main__":
-    rospy.init_node('YD')
-    with console.status("[magenta]Loading YOLO into program") as _:
-        base = RosPack().get_path('rcj_pcms_base') + '/..'
-        _model_h5 = os.path.join(base, 'models/YOLO/yolov3.h5')
-        _coco_classes = os.path.join(base, 'models/YOLO/coco_classes.txt')
-        _anchors = os.path.join(base, 'models/YOLO/yolo3_anchors.txt')
-        _model = YOLO_np(
-            model_type='yolo3_darknet',
-            yolo_weights_path='',
-            weights_path=_model_h5,
-            anchors_path=_anchors,
-            classes_path=_coco_classes
-        )
-    print("[bold cyan]YOLO loaded")
-
-    with console.status("Loading other components") as _:
-        classnames = open(_coco_classes).readlines()
-
-        box = ObjectBox()
-
-        boxes = ObjectBoxes()
-
-        node = YOLODetectionNode()
-        rate = rospy.Rate(35)
-
-        pub = rospy.Publisher(
-            '~boxes',
-            ObjectBoxes,
-            queue_size=1
-        )
-    print("[bold green]Done")
-
-    while not rospy.is_shutdown() and not node.kill:
-        if not node.lock:
-            box_items = []
-            boxes = ObjectBoxes()
-            # Get objects and source images
-            # objects = node.objects
-            blob = node.blob
-            source_image = node.source_image
-
-            if source_image is None or blob is None:
-                continue
-
-            drown_image, out_boxes, out_classes, out_scores = _model.detect_image(blob)
-            drown_image = np.array(drown_image)
-
-            for obj, label, score in zip(out_boxes, out_classes, out_scores):
-                x1, y1, x2, y2 = obj
-                if score < 0.45:
+    def main(self):
+        while not rospy.is_shutdown() and not self._isKill:
+            if not self._isLock:
+                if self._srcframe is None:
                     continue
 
-                box = ObjectBox()
-                # Input box data
-                box.model = 'yolo'
-                box.x1 = x1
-                box.y1 = y1
-                box.x2 = x2
-                box.y2 = y2
-                box.score = score
-                box.label = classnames[label]
+                drown_image = self._srcframe.copy()
+                frame = drown_image.copy()
 
-                box_image = source_image[box.y1:box.y2, box.x1:box.x2].copy()
+                results = self.yolo.detect(drown_image)
+                results.render()
+                boxes = self.yolo.serialize(frame, results)
 
-                # Serialize the image
-                serialized_image = node.bridge.cv2_to_compressed_imgmsg(box_image)
-                box.source_img = serialized_image
+                self.boxes_pub.publish(boxes)
+                if self._isPublishDrownImage:
+                    self.drown_image_pub.publish(drown_image)
 
-                box_items.append(box)
-
-            boxes.boxes = box_items
-            boxes.source_img = node.bridge.cv2_to_compressed_imgmsg(source_image)
-
-            # serialized_drown_img = node.bridge.cv2_to_compressed_imgmsg(np.array(drown_image))
-            # node.source_image_pub.publish(serialized_drown_img)
-            pub.publish(boxes)
-
-            try:
                 cv.imshow('YD', drown_image)
                 key = cv.waitKey(1) & 0xFF
                 if key in [27, ord('q')]:
                     break
-            except Exception:
-                rospy.loginfo(drown_image.shape)
-            rate.sleep()
 
-    cv.destroyAllWindows()
+            self.rate.sleep()
+        cv.destroyAllWindows()
+
+    def reset(self) -> TriggerResponse:
+        return super(YOLODetectionNode, self).reset()
+
+
+if __name__ == "__main__":
+    node = YOLODetectionNode('YD')
+    node.main()
