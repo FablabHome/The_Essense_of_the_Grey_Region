@@ -32,10 +32,10 @@ from home_robot_msgs.srv import PFInitializer, PFInitializerRequest
 from sensor_msgs.msg import CompressedImage
 from std_srvs.srv import Trigger, TriggerResponse, TriggerRequest
 
-from core.Detection import PersonReidentification
+from core.SensorFuncWrapper import PersonReidentification
 from core.Dtypes import BBox
 from core.Nodes import Node
-from core.tools import Speaker
+from core.hardware import Speaker
 
 
 class PFInitialize(Node):

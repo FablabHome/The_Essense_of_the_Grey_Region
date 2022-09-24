@@ -35,7 +35,7 @@ from home_robot_msgs.srv import PFInitializer, PFInitializerRequest, PFInitializ
 from sensor_msgs.msg import CompressedImage
 from std_srvs.srv import Trigger
 
-from core.Detection import PersonReidentification
+from core.SensorFuncWrapper import PersonReidentification
 from core.Dtypes import BBox
 from core.Nodes import Node
 
