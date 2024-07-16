@@ -30,14 +30,14 @@ from typing import List
 import numpy as np
 import rospy
 from cv_bridge import CvBridge
-from home_robot_msgs.msg import ObjectBoxes, ObjectBox
-from home_robot_msgs.srv import PFInitializer, PFInitializerRequest, PFInitializerResponse, ResetPF, ResetPFRequest
 from sensor_msgs.msg import CompressedImage
-from std_srvs.srv import Trigger
+from std_srvs.srv import Trigger, TriggerResponse
 
-from core.SensorFuncWrapper import PersonReidentification
 from core.Dtypes import BBox
 from core.Nodes import Node
+from core.SensorFuncWrapper import PersonReidentification
+from home_robot_msgs.msg import ObjectBoxes, ObjectBox
+from home_robot_msgs.srv import PFInitializer, PFInitializerRequest, PFInitializerResponse
 
 
 class PersonFollower(Node):
@@ -78,8 +78,12 @@ class PersonFollower(Node):
         rospy.Service('pf_initialize', PFInitializer, self.initialized_cb)
 
         # The reset service server
-        rospy.Service('pf_reset', ResetPF, self.on_reset)
+        rospy.Service('pf_reset', Trigger, self.on_reset)
         self.__question_answered = False  # Just for playing
+
+        # Lock Service
+        rospy.Service('pf_lock', Trigger, self.on_lock)
+        self.lock = False
 
         # Proxy of PFInitialize reset service
         self.reset_initializer = rospy.ServiceProxy('pf_init_reset', Trigger)
@@ -126,20 +130,24 @@ class PersonFollower(Node):
 
         return PFInitializerResponse(True)
 
-    def on_reset(self, req: ResetPFRequest):
+    def on_lock(self, _):
+        self.lock = not self.lock
+        return TriggerResponse(True, '')
+
+    def on_reset(self, _):
         # Just for playing
-        rospy.set_param("~todays_question", "V2hvJ3MgdGhlIGFic29sdXRlIGdvZCBvZiBoeXBlcmRlYXRoPw==")
-        answer = 'QXNyaWVsIERyZWVtdXJy'
+        # rospy.set_param("~todays_question", "V2hvJ3MgdGhlIGFic29sdXRlIGdvZCBvZiBoeXBlcmRlYXRoPw==")
+        # answer = 'QXNyaWVsIERyZWVtdXJy'
+        #
+        # user_answer = req.answer
 
-        user_answer = req.answer
+        # if user_answer == answer:
+        self.reset()
+        self.reset_initializer()
 
-        if user_answer == answer:
-            self.reset()
-            self.reset_initializer()
-
-            return True
-        else:
-            return False
+        return TriggerResponse(True, '')
+        # else:
+        #     return ResetPFResponse(False)
 
     def box_callback(self, detections: ObjectBoxes):
         if PersonFollower.STATE != 'NOT_INITIALIZED':
@@ -190,7 +198,7 @@ class PersonFollower(Node):
         confirm_reidentified_timeout = rospy.get_rostime() + PersonFollower.CONFIRM_REIDENTIFIED_TIMEOUT
 
         while not rospy.is_shutdown():
-            if self.rgb_image is None or PersonFollower.STATE == 'NOT_INITIALIZED':
+            if self.rgb_image is None or PersonFollower.STATE == 'NOT_INITIALIZED' or self.lock:
                 continue
 
             # Update self.last_box only if the target_box was confirmed
@@ -268,6 +276,7 @@ class PersonFollower(Node):
     def reset(self):
         self.detection_boxes = []
         PersonFollower.STATE = 'NOT_INITIALIZED'
+        self.lock = False
         # self.front_descriptor = self.back_descriptor = None
 
 
