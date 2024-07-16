@@ -74,7 +74,7 @@ class IntentManager(Node):
                 dataset_name = dataset_path.split(os.path.sep)[-1].split('.')[0]
                 dataset_configs[dataset_name] = dataset_path
 
-            self.nlu_engine = HeySnipsNLUParser(engine_configs=engine_configs)
+            self.nlu_engine = HeySnipsNLUParser(engine_configs=engine_configs, dataset_configs=dataset_configs)
 
             # The Intent blacklist from boss
             self.intent_blacklist = []
