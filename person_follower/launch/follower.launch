@@ -3,6 +3,7 @@
          default="$(find rcj_pcms_base)../models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.bin"/>
     <arg name="xml_path"
          default="$(find rcj_pcms_base)../models/intel/person-reidentification-retail-0277/FP32/person-reidentification-retail-0277.xml"/>
+    <arg name="wait_for_start" default="false"/>
     <node
         name="pf_initializer"
         pkg="person_follower"
@@ -12,6 +13,7 @@
     >
         <param name="bin_path" type="str" value="$(arg bin_path)"/>
         <param name="xml_path" type="str" value="$(arg xml_path)"/>
+        <param name="wait_for_start" type="bool" value="$(arg wait_for_start)"/>
     </node>
     <node
         name="person_follower"

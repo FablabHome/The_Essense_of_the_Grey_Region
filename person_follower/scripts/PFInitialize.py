@@ -86,7 +86,8 @@ class PFInitialize(Node):
         self.init_box = self.__generate_initial_box()
         self.inside_init_box = []
 
-        self.reset_callback(TriggerRequest())
+        if not rospy.get_param('~wait_for_start'):
+            self.reset_callback(TriggerRequest())
         self.main()
 
     def reset_callback(self, req: TriggerRequest):
