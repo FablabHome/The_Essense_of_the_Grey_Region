@@ -4,6 +4,7 @@ from datetime import datetime
 import cv2 as cv
 import rospy
 from cv_bridge import CvBridge
+from os import path
 from sensor_msgs.msg import CompressedImage
 from std_srvs.srv import TriggerResponse
 
@@ -16,8 +17,15 @@ class FollowDatasetCollector(Node):
         self.srcframe = None
         self.bridge = CvBridge()
 
+        rospy.Subscriber(
+            '/top_camera/rgb/image/compressed',
+            CompressedImage,
+            callback=self.__camera_callback,
+            queue_size=1
+        )
+
         fourcc = cv.VideoWriter_fourcc(*'MP4V')
-        self.video_writer = cv.VideoWriter(str(datetime.now()), fourcc, Node.ROS_RATE, (640, 480))
+        self.video_writer = cv.VideoWriter(path.join('/media/root_walker/DATA/datasets/self_dataset', str(datetime.now())), fourcc, Node.ROS_RATE, (640, 480))
 
     def __camera_callback(self, img: CompressedImage):
         self.srcframe = self.bridge.compressed_imgmsg_to_cv2(img)
@@ -32,3 +40,8 @@ class FollowDatasetCollector(Node):
 
     def reset(self) -> TriggerResponse:
         pass
+
+
+if __name__ == '__main__':
+    node = FollowDatasetCollector('dataset_collector')
+    node.main()

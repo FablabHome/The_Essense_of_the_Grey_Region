@@ -1,9 +1,8 @@
 <launch>
-    <include file="$(find astra_launch)/launch/astra.launch"/>
     <node
-        name="pf_visualizer"
+        name="dataset_collector"
         pkg="person_follower"
-        type="PFResultShower.py"
+        type="FollowDatasetCollector.py"
         required="true"
         output="screen"
     />
