@@ -141,7 +141,8 @@ class YOLODetectionNode(Node):
 
                 self.boxes_pub.publish(boxes)
                 if self._isPublishDrownImage:
-                    self.drown_image_pub.publish(drown_image)
+                    serialized_drown_image = self.bridge.cv2_to_compressed_imgmsg(drown_image)
+                    self.drown_image_pub.publish(serialized_drown_image)
 
                 cv.imshow('YD', drown_image)
                 key = cv.waitKey(1) & 0xFF
